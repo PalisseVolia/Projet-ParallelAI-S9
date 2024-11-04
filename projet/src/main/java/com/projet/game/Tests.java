@@ -154,7 +154,7 @@ public class Tests {
 
     public static void main(String[] args) {
         // statPlusieursParties();
-        // Utils.testAvecOthello(10);
+        // Utils.testAvecOthello(10); // générer les CSV
     }
 
 }

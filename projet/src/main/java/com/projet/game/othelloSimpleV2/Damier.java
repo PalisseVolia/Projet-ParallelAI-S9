@@ -415,7 +415,6 @@ public class Damier {
      * @return {@code 0 <= x <= 1} estimation que le joueur j gagne la partie
      */
     public double evalueSituation(Joueur j) {
-// TODO
         if (this.isSituationFinale()) {
             int nj1 = this.comptePions(j);
             int nj2 = this.comptePions(j.adversaire());
