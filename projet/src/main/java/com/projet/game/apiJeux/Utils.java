@@ -89,17 +89,17 @@ public class Utils {
 
     public static void testAvecOthello(int nbr) {
         try {
-            File dir = new File("projet\\src\\main\\java\\com\\projet\\game\\temp");
+            File dir = new File("projet\\src\\main\\java\\com\\projet\\training\\temp");
             generateCSVOfSituations(new File(dir, "noirs" + nbr +".csv"), new File(dir, "blancs"+nbr+".csv"),
                     new JeuOthello(), new OracleStupide<SituationOthello>(Joueur.J1), new OracleStupide<SituationOthello>(Joueur.J2),
-                    nbr, true, true, true,new Random());
+                    nbr, true, false, false,new Random());
         } catch (IOException ex) {
             throw new Error(ex);
         }
     }
     
     public static void main(String[] args) {
-        testAvecOthello(10);
+        testAvecOthello(10000);
     }
 
 }

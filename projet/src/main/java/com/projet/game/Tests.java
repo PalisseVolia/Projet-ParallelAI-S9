@@ -19,6 +19,7 @@ along with CoursBeuvron.  If not, see <http://www.gnu.org/licenses/>.
 package com.projet.game;
 
 import com.projet.game.apiJeux.ChoixCoup;
+import com.projet.game.apiJeux.Utils;
 import com.projet.game.apiJeux.Coup;
 import com.projet.game.apiJeux.Jeu;
 import com.projet.game.apiJeux.Joueur;
@@ -31,6 +32,8 @@ import com.projet.game.othello.JeuOthello;
 import com.projet.game.othello.SituationOthello;
 import com.projet.utils.ConsoleFdB;
 import com.projet.utils.list.ListUtils;
+
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
@@ -152,9 +155,9 @@ public class Tests {
         System.out.println("res as J2 : " + Arrays.toString(res2));
     }
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException {
         // statPlusieursParties();
-        // Utils.testAvecOthello(10); // générer les CSV
+        Utils.testAvecOthello(10); // générer les CSV
     }
 
 }
