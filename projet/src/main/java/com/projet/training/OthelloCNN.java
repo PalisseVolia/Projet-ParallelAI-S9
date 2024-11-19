@@ -133,17 +133,17 @@ public class OthelloCNN {
 
         // Load both black and white positions
         DataSetIterator blackData = cnn.loadData("projet\\src\\main\\java\\com\\projet\\training\\temp\\noirs.csv");
-        DataSetIterator whiteData = cnn.loadData("projet\\src\\main\\java\\com\\projet\\training\\temp\\blancs.csv");
+        // DataSetIterator whiteData = cnn.loadData("projet\\src\\main\\java\\com\\projet\\training\\temp\\blancs.csv");
         
         // Train on black positions
         System.out.println("Training on black positions...");
         cnn.train(blackData);
         
         // Train on white positions
-        System.out.println("Training on white positions...");
-        cnn.train(whiteData);
+        // System.out.println("Training on white positions...");
+        // cnn.train(whiteData);
         
         // Save the trained model
-        cnn.saveModel("othello_model.zip");
+        cnn.saveModel("projet\\src\\main\\java\\com\\projet\\training\\models\\othello_model.zip");
     }
 }
