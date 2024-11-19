@@ -15,13 +15,19 @@ import org.nd4j.linalg.dataset.api.iterator.DataSetIterator;
 import org.nd4j.linalg.factory.Nd4j;
 import org.nd4j.linalg.learning.config.Adam;
 import org.nd4j.linalg.lossfunctions.LossFunctions;
+import com.projet.game.apiJeux.Joueur;
+import com.projet.game.apiJeux.Oracle;
+import com.projet.game.othello.SituationOthello;
+import com.projet.game.othelloSimpleV2.Case;
+import com.projet.game.othelloSimpleV2.Damier;
+
 
 import java.io.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class OthelloCNN {
+public class OthelloCNN implements Oracle<SituationOthello> {
     private static final int BOARD_SIZE = 8;
     private static final int BATCH_SIZE = 64;
     private static final int N_EPOCHS = 10;
@@ -108,6 +114,25 @@ public class OthelloCNN {
         }
     }
 
+    public double evalSituation(SituationOthello s){
+        Damier d = s.getDamierReel();
+        double[][] board = new double[8][8];
+        for (int i = 0; i < 8; i++) {
+            for (int j = 0; j < 8; j++) {
+                Case cur = d.getVal(i, j);
+                if (cur == Case.VIDE) {
+                    board[i][j] = 0;
+                } else if (cur == Case.NOIR) {
+                    board[i][j] = 1;
+                } else {
+                    board[i][j] = -1;
+                }
+            }
+        }
+        return predict(board);
+
+    }
+
     public double predict(double[][] board) {
         INDArray input = Nd4j.zeros(1, 1, BOARD_SIZE, BOARD_SIZE);
         for (int i = 0; i < BOARD_SIZE; i++) {
@@ -145,5 +170,30 @@ public class OthelloCNN {
         
         // Save the trained model
         cnn.saveModel("projet\\src\\main\\java\\com\\projet\\training\\models\\othello_model.zip");
+    }
+
+    public static OthelloCNN recharge(String path) throws IOException {
+        OthelloCNN cnn = new OthelloCNN();
+        cnn.loadModel(path);
+        return cnn;
+    }
+
+    // pour être conforme à l'interface Oracle
+    @Override
+    public List<Joueur> joueursCompatibles() {
+        List<Joueur> res = new ArrayList<>();
+        res.add(Joueur.J1);
+        res.add(Joueur.J2);
+        return res;
+    }
+
+    @Override
+    public Joueur getEvalueSituationApresCoupDe() {
+        return Joueur.J1;
+    }
+
+    @Override
+    public void setEvalueSituationApresCoupDe(Joueur j) {
+        // do nothing
     }
 }

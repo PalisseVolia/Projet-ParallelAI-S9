@@ -30,6 +30,7 @@ import com.projet.game.apiJeux.Situation;
 import com.projet.game.apiJeux.StatutSituation;
 import com.projet.game.othello.JeuOthello;
 import com.projet.game.othello.SituationOthello;
+import com.projet.training.OthelloCNN;
 import com.projet.utils.ConsoleFdB;
 import com.projet.utils.list.ListUtils;
 
@@ -154,10 +155,26 @@ public class Tests {
         int[] res2 = jeu.partieVsAlea(o1, 100, new Random());
         System.out.println("res as J2 : " + Arrays.toString(res2));
     }
+    public static void testVsAlea2() {
+        var jeu = new JeuOthello();
+        Oracle<SituationOthello> o2 = new OracleStupide<SituationOthello>(Joueur.J1);
+        int[] res1 = jeu.partieVsAlea(o2, 100, new Random());
+        System.out.println("res as J1 : " + Arrays.toString(res1));
+        Oracle<SituationOthello> o1;
+        try {
+            o1 = OthelloCNN.recharge("projet\\src\\main\\java\\com\\projet\\training\\models\\othello_model.zip");
+        } catch (IOException e) {
+            // TODO Auto-generated catch block
+           throw new RuntimeException(e);
+        }
+        int[] res2 = jeu.partieVsAlea(o1, 100, new Random());
+        System.out.println("res as J2 : " + Arrays.toString(res2));
+    }
 
     public static void main(String[] args) throws IOException {
         // statPlusieursParties();
-        Utils.testAvecOthello(10); // générer les CSV
+        //Utils.testAvecOthello(10); // générer les CSV
+        testVsAlea2();
     }
 
 }
