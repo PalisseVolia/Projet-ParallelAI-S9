@@ -1,4 +1,3 @@
-
 package com.parallelai.players;
 
 import java.util.ArrayList;
@@ -41,16 +40,24 @@ public class UnifiedAIPlayer extends Player {
             return null;
         }
 
-        // Find move with highest evaluation
-        int bestMoveIndex = 0;
+        // Find best score
         double bestScore = evaluations.get(0);
         for (int i = 1; i < evaluations.size(); i++) {
             if (evaluations.get(i) > bestScore) {
                 bestScore = evaluations.get(i);
-                bestMoveIndex = i;
             }
         }
 
-        return validMoves.get(bestMoveIndex);
+        // Collect all moves with the best score
+        List<Move> bestMoves = new ArrayList<>();
+        for (int i = 0; i < evaluations.size(); i++) {
+            if (evaluations.get(i) == bestScore) {
+                bestMoves.add(validMoves.get(i));
+            }
+        }
+
+        // Randomly select one of the best moves
+        int randomIndex = (int)(Math.random() * bestMoves.size());
+        return bestMoves.get(randomIndex);
     }
 }

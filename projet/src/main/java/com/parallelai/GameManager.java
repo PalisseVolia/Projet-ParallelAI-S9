@@ -5,14 +5,11 @@ import java.util.List;
 import java.util.Scanner;
 
 import com.parallelai.export.BoardState;
-import com.parallelai.export.GameStateExporter;
 import com.parallelai.game.Board;
 import com.parallelai.game.Disc;
 import com.parallelai.game.Move;
 import com.parallelai.game.Player;
-import com.parallelai.players.AIPlayer;
 import com.parallelai.players.HumanPlayer;
-import com.parallelai.players.RandomAIPlayer;
 import com.parallelai.players.UnifiedAIPlayer;
 import com.parallelai.models.Model;
 import com.parallelai.models.MinimaxModel;
@@ -48,9 +45,6 @@ public class GameManager {
     
     /** Indique si la partie est terminée */
     private boolean isGameOver;
-    
-    /** Gestionnaire d'export des états de jeu */
-    private GameStateExporter exporter;
 
     /**
      * Constructeur pour une nouvelle partie interactive.
@@ -62,23 +56,6 @@ public class GameManager {
         this.board = new Board();
         initializePlayers();
         this.currentPlayer = player1; // Initialisation
-        this.exporter = new GameStateExporter("game_states.csv");
-    }
-
-    /**
-     * Constructeur pour une partie entre deux IA.
-     * @param board Le plateau de jeu
-     * @param player1 Premier joueur (IA, pions noirs)
-     * @param player2 Second joueur (IA, pions blancs)
-     */
-    public GameManager(Board board, RandomAIPlayer player1, RandomAIPlayer player2) {
-        this.gameHistory = new ArrayList<>();
-        this.scanner = new Scanner(System.in);
-        this.board = board;
-        this.player1 = player1;
-        this.player2 = player2;
-        this.currentPlayer = player1; // Initialisation
-        this.isGameOver = false;
     }
     
     /**
@@ -95,7 +72,6 @@ public class GameManager {
         this.player2 = new UnifiedAIPlayer(Disc.WHITE, model2);
         this.currentPlayer = player1;
         this.isGameOver = false;
-        this.exporter = new GameStateExporter("model_game_states.csv");
     }
     
     /**
@@ -116,11 +92,11 @@ public class GameManager {
                 break;
             case 2:
                 player1 = new HumanPlayer(Disc.BLACK, scanner);
-                player2 = new AIPlayer(Disc.WHITE);
+                player2 = new UnifiedAIPlayer(Disc.WHITE, new RandomModel());
                 break;
             case 3:
-                player1 = new AIPlayer(Disc.BLACK);
-                player2 = new AIPlayer(Disc.WHITE);
+                player1 = new UnifiedAIPlayer(Disc.WHITE, new RandomModel());
+                player2 = new UnifiedAIPlayer(Disc.WHITE, new RandomModel());
                 break;
         }
     }
@@ -133,7 +109,6 @@ public class GameManager {
     public void startGame() {
         while (!isGameOver) {
             board.display();
-            saveGameState();
             
             if (board.hasValidMoves(currentPlayer.getColor())) {
                 System.out.println("Current player: " + currentPlayer.getColor());
@@ -154,25 +129,6 @@ public class GameManager {
         }
         
         announceWinner();
-    }
-
-    /**
-     * Sauvegarde l'état courant du plateau pour l'apprentissage.
-     * L'état est exporté avec l'information si la position est gagnante
-     * pour le joueur courant.
-     */
-    private void saveGameState() {
-        // Déterminer si le joueur actuel a gagné
-        int blackCount = board.getDiscCount(Disc.BLACK);
-        int whiteCount = board.getDiscCount(Disc.WHITE);
-        boolean blackWon = blackCount > whiteCount;
-        
-        // Sauvegarder l'état
-        if (currentPlayer.getColor() == Disc.BLACK) {
-            exporter.exportState(board, blackWon);
-        } else {
-            exporter.exportState(board, !blackWon);
-        }
     }
 
     /**
@@ -198,19 +154,6 @@ public class GameManager {
     }
 
     /**
-     * Crée et lance une partie entre deux IA jouant aléatoirement.
-     * Utilisé pour générer des données d'apprentissage.
-     */
-    public static void playRandomAIGame() {
-        Board board = new Board();
-        RandomAIPlayer player1 = new RandomAIPlayer(Disc.BLACK);
-        RandomAIPlayer player2 = new RandomAIPlayer(Disc.WHITE);
-        
-        GameManager game = new GameManager(board, player1, player2);
-        game.startGame();
-    }
-
-    /**
      * Creates and plays a game between two models.
      * @param model1 First model (plays black)
      * @param model2 Second model (plays white)
@@ -222,6 +165,9 @@ public class GameManager {
     }
 
     public static void main(String[] args) {
+        // GameManager game = new GameManager();
+        // game.startGame();
+        // playRandomAIGame();
         // Example of how to use the new model game functionality
         Model minimaxModel = new MinimaxModel();
         Model randomModel = new RandomModel();
