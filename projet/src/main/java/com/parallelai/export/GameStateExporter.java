@@ -1,7 +1,10 @@
-package com.parallelai;
+package com.parallelai.export;
 
 import java.io.FileWriter;
 import java.io.IOException;
+
+import com.parallelai.game.Board;
+import com.parallelai.game.Disc;
 
 /**
  * Gestionnaire d'export des états de jeu au format CSV.

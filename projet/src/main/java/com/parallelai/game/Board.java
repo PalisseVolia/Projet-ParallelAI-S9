@@ -1,4 +1,4 @@
-package com.parallelai;
+package com.parallelai.game;
 
 /**
  * Représentation du plateau de jeu d'Othello.

@@ -1,6 +1,11 @@
-package com.parallelai;
+package com.parallelai.players;
 
 import java.util.Scanner;
+
+import com.parallelai.game.Board;
+import com.parallelai.game.Disc;
+import com.parallelai.game.Move;
+import com.parallelai.game.Player;
 
 /**
  * Représente un joueur humain dans le jeu d'Othello.

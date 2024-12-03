@@ -1,4 +1,4 @@
-package com.parallelai;
+package com.parallelai.game;
 
 /**
  * Classe abstraite représentant un joueur d'Othello.

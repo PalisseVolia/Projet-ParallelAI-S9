@@ -1,4 +1,7 @@
-package com.parallelai;
+package com.parallelai.export;
+
+import com.parallelai.game.Board;
+import com.parallelai.game.Disc;
 
 /**
  * Représente un instantané de l'état du plateau de jeu Othello.

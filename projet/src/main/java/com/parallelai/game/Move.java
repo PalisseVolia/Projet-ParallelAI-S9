@@ -1,4 +1,4 @@
-package com.parallelai;
+package com.parallelai.game;
 
 /**
  * Représente un coup dans le jeu d'Othello.

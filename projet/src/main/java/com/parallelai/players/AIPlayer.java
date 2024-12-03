@@ -1,4 +1,9 @@
-package com.parallelai;
+package com.parallelai.players;
+
+import com.parallelai.game.Board;
+import com.parallelai.game.Disc;
+import com.parallelai.game.Move;
+import com.parallelai.game.Player;
 
 /**
  * Implémentation d'un joueur IA utilisant l'algorithme Minimax.

@@ -1,8 +1,13 @@
-package com.parallelai;
+package com.parallelai.players;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+
+import com.parallelai.game.Board;
+import com.parallelai.game.Disc;
+import com.parallelai.game.Move;
+import com.parallelai.game.Player;
 
 /**
  * Implémentation d'un joueur IA qui joue de façon aléatoire.

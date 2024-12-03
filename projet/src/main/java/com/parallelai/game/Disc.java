@@ -1,4 +1,4 @@
-package com.parallelai;
+package com.parallelai.game;
 
 /**
  * Représente les différents états possibles d'une case du plateau Othello.

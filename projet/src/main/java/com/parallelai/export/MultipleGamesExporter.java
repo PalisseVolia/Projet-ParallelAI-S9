@@ -1,10 +1,16 @@
-package com.parallelai;
+package com.parallelai.export;
 
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+
+import com.parallelai.game.Board;
+import com.parallelai.game.Disc;
+import com.parallelai.game.Move;
+import com.parallelai.game.Player;
+import com.parallelai.players.RandomAIPlayer;
 
 /**
  * Gestionnaire d'export de données pour l'apprentissage automatique d'Othello.

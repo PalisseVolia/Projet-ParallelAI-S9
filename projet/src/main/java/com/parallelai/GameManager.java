@@ -4,6 +4,16 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 
+import com.parallelai.export.BoardState;
+import com.parallelai.export.GameStateExporter;
+import com.parallelai.game.Board;
+import com.parallelai.game.Disc;
+import com.parallelai.game.Move;
+import com.parallelai.game.Player;
+import com.parallelai.players.AIPlayer;
+import com.parallelai.players.HumanPlayer;
+import com.parallelai.players.RandomAIPlayer;
+
 /**
  * Gestionnaire de partie d'Othello.
  * Cette classe gère le déroulement d'une partie d'Othello, avec:
