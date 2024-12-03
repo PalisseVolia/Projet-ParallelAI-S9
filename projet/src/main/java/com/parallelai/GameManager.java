@@ -10,15 +10,29 @@ public class GameManager {
     private Board board;
     private Player player1;
     private Player player2;
+    private Player currentPlayer; // Ajout de la variable d'instance
     private boolean isGameOver;
+    private GameStateExporter exporter;
 
     public GameManager() {
         this.gameHistory = new ArrayList<>();
         this.scanner = new Scanner(System.in);
         this.board = new Board();
         initializePlayers();
+        this.currentPlayer = player1; // Initialisation
+        this.exporter = new GameStateExporter("game_states.csv");
     }
 
+    public GameManager(Board board, RandomAIPlayer player1, RandomAIPlayer player2) {
+        this.gameHistory = new ArrayList<>();
+        this.scanner = new Scanner(System.in);
+        this.board = board;
+        this.player1 = player1;
+        this.player2 = player2;
+        this.currentPlayer = player1; // Initialisation
+        this.isGameOver = false;
+    }
+    
     private void initializePlayers() {
         System.out.println("Choose game mode:");
         System.out.println("1. Human vs Human");
@@ -43,8 +57,6 @@ public class GameManager {
     }
 
     public void startGame() {
-        Player currentPlayer = player1;
-        
         while (!isGameOver) {
             board.display();
             saveGameState();
@@ -63,6 +75,7 @@ public class GameManager {
                 }
             }
             
+            // Mise à jour du joueur courant
             currentPlayer = (currentPlayer == player1) ? player2 : player1;
         }
         
@@ -70,7 +83,17 @@ public class GameManager {
     }
 
     private void saveGameState() {
-        gameHistory.add(new BoardState(board));
+        // Déterminer si le joueur actuel a gagné
+        int blackCount = board.getDiscCount(Disc.BLACK);
+        int whiteCount = board.getDiscCount(Disc.WHITE);
+        boolean blackWon = blackCount > whiteCount;
+        
+        // Sauvegarder l'état
+        if (currentPlayer.getColor() == Disc.BLACK) {
+            exporter.exportState(board, blackWon);
+        } else {
+            exporter.exportState(board, !blackWon);
+        }
     }
 
     private void announceWinner() {
@@ -91,8 +114,18 @@ public class GameManager {
         }
     }
 
-    public static void main(String[] args) {
-        GameManager game = new GameManager();
+    public static void playRandomAIGame() {
+        Board board = new Board();
+        RandomAIPlayer player1 = new RandomAIPlayer(Disc.BLACK);
+        RandomAIPlayer player2 = new RandomAIPlayer(Disc.WHITE);
+        
+        GameManager game = new GameManager(board, player1, player2);
         game.startGame();
+    }
+
+    public static void main(String[] args) {
+        //GameManager game = new GameManager();
+        //game.startGame();
+        playRandomAIGame();
     }
 }
