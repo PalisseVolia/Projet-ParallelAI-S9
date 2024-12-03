@@ -13,6 +13,10 @@ import com.parallelai.game.Player;
 import com.parallelai.players.AIPlayer;
 import com.parallelai.players.HumanPlayer;
 import com.parallelai.players.RandomAIPlayer;
+import com.parallelai.players.UnifiedAIPlayer;
+import com.parallelai.models.Model;
+import com.parallelai.models.MinimaxModel;
+import com.parallelai.models.RandomModel;
 
 /**
  * Gestionnaire de partie d'Othello.
@@ -75,6 +79,23 @@ public class GameManager {
         this.player2 = player2;
         this.currentPlayer = player1; // Initialisation
         this.isGameOver = false;
+    }
+    
+    /**
+     * Constructor for a game between two models
+     * @param board The game board
+     * @param model1 Model for player 1
+     * @param model2 Model for player 2
+     */
+    public GameManager(Board board, Model model1, Model model2) {
+        this.gameHistory = new ArrayList<>();
+        this.scanner = new Scanner(System.in);
+        this.board = board;
+        this.player1 = new UnifiedAIPlayer(Disc.BLACK, model1);
+        this.player2 = new UnifiedAIPlayer(Disc.WHITE, model2);
+        this.currentPlayer = player1;
+        this.isGameOver = false;
+        this.exporter = new GameStateExporter("model_game_states.csv");
     }
     
     /**
@@ -189,9 +210,21 @@ public class GameManager {
         game.startGame();
     }
 
+    /**
+     * Creates and plays a game between two models.
+     * @param model1 First model (plays black)
+     * @param model2 Second model (plays white)
+     */
+    public static void playModelGame(Model model1, Model model2) {
+        Board board = new Board();
+        GameManager game = new GameManager(board, model1, model2);
+        game.startGame();
+    }
+
     public static void main(String[] args) {
-        //GameManager game = new GameManager();
-        //game.startGame();
-        playRandomAIGame();
+        // Example of how to use the new model game functionality
+        Model minimaxModel = new MinimaxModel();
+        Model randomModel = new RandomModel();
+        playModelGame(minimaxModel, randomModel);
     }
 }
