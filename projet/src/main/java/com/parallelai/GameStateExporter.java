@@ -3,13 +3,41 @@ package com.parallelai;
 import java.io.FileWriter;
 import java.io.IOException;
 
+/**
+ * Gestionnaire d'export des états de jeu au format CSV.
+ * Cette classe permet de:
+ * - Sauvegarder l'état du plateau à un moment donné
+ * - Convertir les états en format exploitable pour l'apprentissage
+ * - Créer un dataset d'entraînement pour le machine learning
+ * 
+ * Format de sortie:
+ * - 64 colonnes pour l'état du plateau (1=noir, -1=blanc, 0=vide)
+ * - 1 colonne pour le résultat (1=victoire, 0=défaite)
+ */
 public class GameStateExporter {
+    /** Chemin du fichier CSV de sortie */
     private final String outputPath;
 
+    /**
+     * Crée un nouveau gestionnaire d'export.
+     * 
+     * @param outputPath Chemin du fichier CSV où sauvegarder les données
+     */
     public GameStateExporter(String outputPath) {
         this.outputPath = outputPath;
     }
 
+    /**
+     * Exporte l'état actuel du plateau dans le fichier CSV.
+     * Convertit chaque case en valeur numérique:
+     * - Pion noir = 1
+     * - Pion blanc = -1
+     * - Case vide = 0
+     * Ajoute le résultat final (victoire/défaite) comme dernière colonne.
+     * 
+     * @param board État du plateau à exporter
+     * @param won true si la position est gagnante pour le joueur courant
+     */
     public void exportState(Board board, boolean won) {
         try (FileWriter writer = new FileWriter(outputPath, true)) {
             // Écrire l'état du plateau (64 cases)

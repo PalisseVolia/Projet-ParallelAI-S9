@@ -4,16 +4,44 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 
+/**
+ * Gestionnaire de partie d'Othello.
+ * Cette classe gère le déroulement d'une partie d'Othello, avec:
+ * - Gestion des joueurs (humains ou IA)
+ * - Application des règles du jeu
+ * - Suivi de l'historique des coups
+ * - Export des états de jeu pour l'apprentissage
+ */
 public class GameManager {
+    /** Historique des états du plateau pendant la partie */
+    @SuppressWarnings("unused")
     private List<BoardState> gameHistory;
+    
+    /** Scanner pour la saisie utilisateur */
     private Scanner scanner;
+    
+    /** Plateau de jeu */
     private Board board;
+    
+    /** Premier joueur (pions noirs) */
     private Player player1;
+    
+    /** Second joueur (pions blancs) */
     private Player player2;
-    private Player currentPlayer; // Ajout de la variable d'instance
+    
+    /** Joueur dont c'est le tour */
+    private Player currentPlayer;
+    
+    /** Indique si la partie est terminée */
     private boolean isGameOver;
+    
+    /** Gestionnaire d'export des états de jeu */
     private GameStateExporter exporter;
 
+    /**
+     * Constructeur pour une nouvelle partie interactive.
+     * Initialise un nouveau plateau et permet de choisir le mode de jeu.
+     */
     public GameManager() {
         this.gameHistory = new ArrayList<>();
         this.scanner = new Scanner(System.in);
@@ -23,6 +51,12 @@ public class GameManager {
         this.exporter = new GameStateExporter("game_states.csv");
     }
 
+    /**
+     * Constructeur pour une partie entre deux IA.
+     * @param board Le plateau de jeu
+     * @param player1 Premier joueur (IA, pions noirs)
+     * @param player2 Second joueur (IA, pions blancs)
+     */
     public GameManager(Board board, RandomAIPlayer player1, RandomAIPlayer player2) {
         this.gameHistory = new ArrayList<>();
         this.scanner = new Scanner(System.in);
@@ -33,6 +67,10 @@ public class GameManager {
         this.isGameOver = false;
     }
     
+    /**
+     * Configure les joueurs selon le mode de jeu choisi par l'utilisateur.
+     * Propose 3 modes : Humain vs Humain, Humain vs IA, IA vs IA
+     */
     private void initializePlayers() {
         System.out.println("Choose game mode:");
         System.out.println("1. Human vs Human");
@@ -56,6 +94,11 @@ public class GameManager {
         }
     }
 
+    /**
+     * Lance et gère le déroulement de la partie.
+     * Alterne les tours entre les joueurs jusqu'à la fin de partie.
+     * Affiche le plateau et sauvegarde les états de jeu.
+     */
     public void startGame() {
         while (!isGameOver) {
             board.display();
@@ -82,6 +125,11 @@ public class GameManager {
         announceWinner();
     }
 
+    /**
+     * Sauvegarde l'état courant du plateau pour l'apprentissage.
+     * L'état est exporté avec l'information si la position est gagnante
+     * pour le joueur courant.
+     */
     private void saveGameState() {
         // Déterminer si le joueur actuel a gagné
         int blackCount = board.getDiscCount(Disc.BLACK);
@@ -96,6 +144,10 @@ public class GameManager {
         }
     }
 
+    /**
+     * Affiche le résultat final de la partie.
+     * Compte les pions et détermine le vainqueur.
+     */
     private void announceWinner() {
         board.display();
         int blackCount = board.getDiscCount(Disc.BLACK);
@@ -114,6 +166,10 @@ public class GameManager {
         }
     }
 
+    /**
+     * Crée et lance une partie entre deux IA jouant aléatoirement.
+     * Utilisé pour générer des données d'apprentissage.
+     */
     public static void playRandomAIGame() {
         Board board = new Board();
         RandomAIPlayer player1 = new RandomAIPlayer(Disc.BLACK);

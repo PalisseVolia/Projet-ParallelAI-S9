@@ -4,14 +4,38 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
+/**
+ * Implémentation d'un joueur IA qui joue de façon aléatoire.
+ * Cette classe permet de:
+ * - Identifier les coups valides possibles
+ * - Assigner une évaluation uniforme à chaque coup (0.5)
+ * - Sélectionner un coup aléatoirement parmi les coups valides
+ * Cette implémentation servira de base pour des stratégies plus avancées
+ * où les évaluations seront fournies par un modèle d'apprentissage.
+ */
+
 public class RandomAIPlayer extends Player {
+    /** Générateur de nombres aléatoires pour la sélection des coups */
     private final Random random;
     
+    /**
+     * Crée un nouveau joueur IA aléatoire.
+     * @param color La couleur des pions du joueur (NOIR ou BLANC)
+     */
     public RandomAIPlayer(Disc color) {
         super(color);
         this.random = new Random();
     }
 
+    /**
+     * Détermine le prochain coup à jouer.
+     * 1. Trouve tous les coups valides sur le plateau
+     * 2. Assigne une évaluation de 0.5 à chaque coup
+     * 3. Sélectionne un coup au hasard parmi les possibilités
+     * 
+     * @param board État actuel du plateau de jeu
+     * @return Le coup choisi, ou null si aucun coup n'est possible
+     */
     @Override
     public Move getMove(Board board) {
         // Récupérer tous les coups valides

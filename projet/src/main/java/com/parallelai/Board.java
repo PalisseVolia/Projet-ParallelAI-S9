@@ -1,16 +1,32 @@
 package com.parallelai;
 
-
-
+/**
+ * Représentation du plateau de jeu d'Othello.
+ * Cette classe gère:
+ * - L'état du plateau (8x8 cases)
+ * - La validation des coups
+ * - L'application des règles du jeu
+ * - Le comptage des pions
+ */
 public class Board {
+    /** Taille du plateau (8x8) */
     private static final int SIZE = 8;
-    private Disc[][] grid;
+    
+    /** Directions possibles pour retourner les pions */
     private static final int[][] DIRECTIONS = {
         {-1, -1}, {-1, 0}, {-1, 1},
         {0, -1},           {0, 1},
         {1, -1},  {1, 0},  {1, 1}
     };
+    
+    /** Grille du plateau stockant les pions */
+    private Disc[][] grid;
 
+    /**
+     * Crée un nouveau plateau dans sa configuration initiale:
+     * - 4 pions au centre (2 noirs, 2 blancs)
+     * - Le reste des cases vides
+     */
     public Board() {
         grid = new Disc[SIZE][SIZE];
         initializeBoard();
@@ -28,6 +44,10 @@ public class Board {
         grid[4][4] = Disc.WHITE;
     }
 
+    /**
+     * Affiche l'état actuel du plateau.
+     * Montre les pions noirs (X), blancs (O) et cases vides (.).
+     */
     public void display() {
         System.out.println("  0 1 2 3 4 5 6 7");
         for (int i = 0; i < SIZE; i++) {
@@ -39,6 +59,14 @@ public class Board {
         }
     }
 
+    /**
+     * Vérifie si un coup est valide selon les règles d'Othello.
+     * Un coup est valide s'il permet de retourner au moins un pion adverse.
+     * 
+     * @param move Le coup à vérifier
+     * @param color La couleur du joueur qui joue
+     * @return true si le coup est valide
+     */
     public boolean isValidMove(Move move, Disc color) {
         if (!isInBounds(move) || grid[move.row][move.col] != Disc.EMPTY) {
             return false;
@@ -57,6 +85,14 @@ public class Board {
                move.col >= 0 && move.col < SIZE;
     }
 
+    /**
+     * Vérifie si des pions seraient retournés dans une direction donnée.
+     * 
+     * @param move Le coup à vérifier
+     * @param direction La direction à explorer
+     * @param color La couleur du joueur
+     * @return true si des pions peuvent être retournés
+     */
     private boolean wouldFlip(Move move, int[] direction, Disc color) {
         int row = move.row + direction[0];
         int col = move.col + direction[1];
@@ -77,6 +113,11 @@ public class Board {
         return false;
     }
 
+    /**
+     * Applique un coup sur le plateau en retournant les pions nécessaires.
+     * 
+     * @param move Le coup à jouer
+     */
     public void makeMove(Move move) {
         grid[move.row][move.col] = move.color;
         for (int[] direction : DIRECTIONS) {
@@ -84,6 +125,12 @@ public class Board {
         }
     }
 
+    /**
+     * Retourne les pions dans une direction donnée suite à un coup.
+     * 
+     * @param move Le coup joué
+     * @param direction La direction où retourner les pions
+     */
     private void flipDiscs(Move move, int[] direction) {
         if (!wouldFlip(move, direction, move.color)) return;
 
@@ -97,6 +144,12 @@ public class Board {
         }
     }
 
+    /**
+     * Vérifie si un joueur a au moins un coup valide disponible.
+     * 
+     * @param color La couleur du joueur à vérifier
+     * @return true si le joueur peut jouer
+     */
     public boolean hasValidMoves(Disc color) {
         for (int i = 0; i < SIZE; i++) {
             for (int j = 0; j < SIZE; j++) {
@@ -108,6 +161,12 @@ public class Board {
         return false;
     }
 
+    /**
+     * Compte le nombre de pions d'une couleur donnée sur le plateau.
+     * 
+     * @param color La couleur des pions à compter
+     * @return Le nombre de pions de cette couleur
+     */
     public int getDiscCount(Disc color) {
         int count = 0;
         for (int i = 0; i < SIZE; i++) {
@@ -120,6 +179,11 @@ public class Board {
         return count;
     }
 
+    /**
+     * Renvoie la grille représentant le plateau.
+     * 
+     * @return Le tableau 2D contenant les pions
+     */
     public Disc[][] getGrid() {
         return grid;
     }

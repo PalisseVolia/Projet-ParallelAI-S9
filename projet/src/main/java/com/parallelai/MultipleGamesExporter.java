@@ -1,16 +1,42 @@
 package com.parallelai;
 
+/**
+ * Gestionnaire d'export de données pour l'apprentissage automatique d'Othello.
+ * Cette classe permet de:
+ * - Jouer plusieurs parties entre IAs aléatoires
+ * - Sauvegarder chaque état de jeu au format CSV
+ * - Générer un dataset d'entraînement pour le machine learning
+ */
 public class MultipleGamesExporter {
+    /** Chemin du fichier CSV de sortie */
+    @SuppressWarnings("unused")
     private final String outputPath;
+    
+    /** Nombre total de parties à jouer */
     private final int nbParties;
+    
+    /** Gestionnaire d'export pour une situation donnée */
     private final GameStateExporter exporter;
 
+    /**
+     * Crée un gestionnaire d'export de parties multiples.
+     * @param outputPath Chemin du fichier CSV où sauvegarder les données
+     * @param nbParties Nombre de parties à jouer et exporter
+     */
     public MultipleGamesExporter(String outputPath, int nbParties) {
         this.outputPath = outputPath;
         this.nbParties = nbParties;
         this.exporter = new GameStateExporter(outputPath);
     }
 
+    /**
+     * Lance l'export des parties.
+     * Pour chaque partie:
+     * - Fait jouer deux IA aléatoires
+     * - Sauvegarde chaque état du plateau dans le CSV
+     * - Ajoute pour chaque état si la position est gagnante
+     * Affiche la progression de l'export.
+     */
     public void playAndExportGames() {
         System.out.println("Début de l'export de " + nbParties + " parties...");
         
@@ -43,7 +69,14 @@ public class MultipleGamesExporter {
         }
         System.out.println("Export terminé!");
     }
-    
+
+    /**
+     * Détermine si une position est gagnante pour un joueur.
+     * Compare le nombre de pions de chaque couleur.
+     * @param board État du plateau à évaluer
+     * @param playerColor Couleur du joueur à évaluer
+     * @return true si la position est gagnante pour le joueur
+     */
     private boolean isWinningPosition(Board board, Disc playerColor) {
         int blackCount = board.getDiscCount(Disc.BLACK);
         int whiteCount = board.getDiscCount(Disc.WHITE);
@@ -55,6 +88,10 @@ public class MultipleGamesExporter {
         }
     }
 
+    /**
+     * Point d'entrée pour lancer un export.
+     * @param args Arguments non utilisés
+     */
     public static void main(String[] args) {
         int nbParties = 100; // ou autre nombre souhaité
         MultipleGamesExporter exporter = new MultipleGamesExporter("training_data.csv", nbParties);
