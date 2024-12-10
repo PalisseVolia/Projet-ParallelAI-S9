@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 
-import com.parallelai.export.BoardState;
+import com.parallelai.export.GameStateExporter;
 import com.parallelai.game.Board;
 import com.parallelai.game.Disc;
 import com.parallelai.game.Move;
@@ -25,8 +25,7 @@ import com.parallelai.models.RandomModel;
  */
 public class GameManager {
     /** Historique des états du plateau pendant la partie */
-    @SuppressWarnings("unused")
-    private List<BoardState> gameHistory;
+    private List<Board> gameHistory; // Changement du type
     
     /** Scanner pour la saisie utilisateur */
     private Scanner scanner;
@@ -109,6 +108,7 @@ public class GameManager {
     public void startGame() {
         while (!isGameOver) {
             board.display();
+            gameHistory.add(board.copy()); // Ajouter une copie du plateau actuel
             
             if (board.hasValidMoves(currentPlayer.getColor())) {
                 System.out.println("Current player: " + currentPlayer.getColor());
@@ -128,7 +128,34 @@ public class GameManager {
             currentPlayer = (currentPlayer == player1) ? player2 : player1;
         }
         
+        // Exporter l'historique de la partie
+        GameStateExporter exporter = new GameStateExporter("game_history.csv");
+        exporter.exportGame(gameHistory, board);
+        
         announceWinner();
+    }
+
+    /**
+     * Joue le prochain coup de la partie
+     * @return true si le coup a été joué, false si la partie est terminée
+     */
+    public boolean playNextMove() {
+        if (isGameOver) return false;
+        
+        if (board.hasValidMoves(currentPlayer.getColor())) {
+            Move move = currentPlayer.getMove(board);
+            if (move != null) {
+                board.makeMove(move);
+            }
+        } else {
+            if (!board.hasValidMoves(currentPlayer.getColor().opposite())) {
+                isGameOver = true;
+                return false;
+            }
+        }
+        
+        currentPlayer = (currentPlayer == player1) ? player2 : player1;
+        return true;
     }
 
     /**
@@ -165,12 +192,17 @@ public class GameManager {
     }
 
     public static void main(String[] args) {
-        // GameManager game = new GameManager();
-        // game.startGame();
-        // playRandomAIGame();
-        // Example of how to use the new model game functionality
-        Model minimaxModel = new MinimaxModel();
-        Model randomModel = new RandomModel();
-        playModelGame(minimaxModel, randomModel);
+        // Création des modèles pour les parties
+        Model model1 = new MinimaxModel();
+        Model model2 = new RandomModel();
+        
+        // Nombre de parties à jouer
+        int nbParties = 100; // Par exemple
+        
+        // Création de l'exporteur et lancement des parties
+        GameStateExporter exporter = new GameStateExporter("game_history.csv");
+        System.out.println("Lancement de " + nbParties + " parties...");
+        exporter.startGames(nbParties, model1, model2);
+        System.out.println("Toutes les parties ont été jouées et sauvegardées!");
     }
 }

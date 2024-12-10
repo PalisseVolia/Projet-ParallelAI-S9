@@ -187,4 +187,18 @@ public class Board {
     public Disc[][] getGrid() {
         return grid;
     }
+
+    /**
+     * Crée une copie profonde du plateau actuel
+     * @return Une nouvelle instance de Board avec le même état
+     */
+    public Board copy() {
+        Board newBoard = new Board();
+        for (int i = 0; i < SIZE; i++) {
+            for (int j = 0; j < SIZE; j++) {
+                newBoard.grid[i][j] = this.grid[i][j];
+            }
+        }
+        return newBoard;
+    }
 }

@@ -19,7 +19,6 @@ along with CoursBeuvron.  If not, see <http://www.gnu.org/licenses/>.
 package com.projet.game;
 
 import com.projet.game.apiJeux.ChoixCoup;
-import com.projet.game.apiJeux.Utils;
 import com.projet.game.apiJeux.Coup;
 import com.projet.game.apiJeux.Jeu;
 import com.projet.game.apiJeux.Joueur;
@@ -164,7 +163,6 @@ public class Tests {
         try {
             o1 = OthelloCNN.recharge("projet\\src\\main\\java\\com\\projet\\training\\models\\othello_model.zip");
         } catch (IOException e) {
-            // TODO Auto-generated catch block
            throw new RuntimeException(e);
         }
         int[] res2 = jeu.partieVsAlea(o1, 100, new Random());
