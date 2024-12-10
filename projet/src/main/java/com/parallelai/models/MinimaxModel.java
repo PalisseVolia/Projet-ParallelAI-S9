@@ -4,6 +4,7 @@ package com.parallelai.models;
 import com.parallelai.game.Board;
 import com.parallelai.game.Disc;
 import com.parallelai.game.Move;
+import com.parallelai.models.utils.Model;
 
 /**
  * Model that uses minimax algorithm to evaluate moves.

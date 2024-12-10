@@ -1,5 +1,5 @@
 
-package com.parallelai.models;
+package com.parallelai.models.utils;
 
 import com.parallelai.game.Board;
 import com.parallelai.game.Move;

@@ -7,7 +7,7 @@ import com.parallelai.game.Board;
 import com.parallelai.game.Disc;
 import com.parallelai.game.Move;
 import com.parallelai.game.Player;
-import com.parallelai.models.Model;
+import com.parallelai.models.utils.Model;
 
 /**
  * Unified AI player that uses a model to evaluate and select moves.

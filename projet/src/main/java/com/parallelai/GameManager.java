@@ -1,33 +1,24 @@
 package com.parallelai;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Scanner;
+import java.util.List;
 
-import com.parallelai.export.BoardState;
 import com.parallelai.game.Board;
 import com.parallelai.game.Disc;
 import com.parallelai.game.Move;
 import com.parallelai.game.Player;
 import com.parallelai.players.HumanPlayer;
 import com.parallelai.players.UnifiedAIPlayer;
-import com.parallelai.models.Model;
-import com.parallelai.models.MinimaxModel;
-import com.parallelai.models.RandomModel;
+import com.parallelai.models.utils.Model;
+import com.parallelai.models.utils.ModelRegistry;
 
 /**
  * Gestionnaire de partie d'Othello.
  * Cette classe gère le déroulement d'une partie d'Othello, avec:
  * - Gestion des joueurs (humains ou IA)
  * - Application des règles du jeu
- * - Suivi de l'historique des coups
- * - Export des états de jeu pour l'apprentissage
  */
 public class GameManager {
-    /** Historique des états du plateau pendant la partie */
-    @SuppressWarnings("unused")
-    private List<BoardState> gameHistory;
-    
     /** Scanner pour la saisie utilisateur */
     private Scanner scanner;
     
@@ -51,7 +42,6 @@ public class GameManager {
      * Initialise un nouveau plateau et permet de choisir le mode de jeu.
      */
     public GameManager() {
-        this.gameHistory = new ArrayList<>();
         this.scanner = new Scanner(System.in);
         this.board = new Board();
         initializePlayers();
@@ -65,7 +55,6 @@ public class GameManager {
      * @param model2 Model for player 2
      */
     public GameManager(Board board, Model model1, Model model2) {
-        this.gameHistory = new ArrayList<>();
         this.scanner = new Scanner(System.in);
         this.board = board;
         this.player1 = new UnifiedAIPlayer(Disc.BLACK, model1);
@@ -92,13 +81,28 @@ public class GameManager {
                 break;
             case 2:
                 player1 = new HumanPlayer(Disc.BLACK, scanner);
-                player2 = new UnifiedAIPlayer(Disc.WHITE, new RandomModel());
+                player2 = new UnifiedAIPlayer(Disc.WHITE, selectAIModel("Select AI model for White"));
                 break;
             case 3:
-                player1 = new UnifiedAIPlayer(Disc.WHITE, new RandomModel());
-                player2 = new UnifiedAIPlayer(Disc.WHITE, new RandomModel());
+                player1 = new UnifiedAIPlayer(Disc.BLACK, selectAIModel("Select AI model for Black"));
+                player2 = new UnifiedAIPlayer(Disc.WHITE, selectAIModel("Select AI model for White"));
                 break;
         }
+    }
+
+    /**
+     * Permet à l'utilisateur de sélectionner un modèle d'IA parmi les modèles disponibles.
+     * @param prompt Message à afficher pour inviter l'utilisateur à faire un choix.
+     * @return Le modèle d'IA sélectionné.
+     */
+    private Model selectAIModel(String prompt) {
+        List<ModelRegistry.ModelInfo> models = ModelRegistry.getAvailableModels();
+        System.out.println(prompt + ":");
+        for (int i = 0; i < models.size(); i++) {
+            System.out.println((i + 1) + ". " + models.get(i).name);
+        }
+        int choice = scanner.nextInt() - 1;
+        return ModelRegistry.createModel(choice);
     }
 
     /**
@@ -123,11 +127,9 @@ public class GameManager {
                     break;
                 }
             }
-            
             // Mise à jour du joueur courant
             currentPlayer = (currentPlayer == player1) ? player2 : player1;
         }
-        
         announceWinner();
     }
 
@@ -153,24 +155,8 @@ public class GameManager {
         }
     }
 
-    /**
-     * Creates and plays a game between two models.
-     * @param model1 First model (plays black)
-     * @param model2 Second model (plays white)
-     */
-    public static void playModelGame(Model model1, Model model2) {
-        Board board = new Board();
-        GameManager game = new GameManager(board, model1, model2);
-        game.startGame();
-    }
-
     public static void main(String[] args) {
-        // GameManager game = new GameManager();
-        // game.startGame();
-        // playRandomAIGame();
-        // Example of how to use the new model game functionality
-        Model minimaxModel = new MinimaxModel();
-        Model randomModel = new RandomModel();
-        playModelGame(minimaxModel, randomModel);
+        GameManager game = new GameManager();
+        game.startGame();
     }
 }

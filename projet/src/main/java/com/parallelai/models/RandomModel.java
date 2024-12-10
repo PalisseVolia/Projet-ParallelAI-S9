@@ -3,6 +3,7 @@ package com.parallelai.models;
 
 import com.parallelai.game.Board;
 import com.parallelai.game.Move;
+import com.parallelai.models.utils.Model;
 
 /**
  * Model that assigns equal probability to all moves.
