@@ -7,7 +7,7 @@ import java.util.List;
 import com.parallelai.GameManager;
 import com.parallelai.game.Board;
 import com.parallelai.game.Disc;
-import com.parallelai.models.Model;
+import com.parallelai.models.utils.Model;
 
 /**
  * Gestionnaire d'export des états de jeu au format CSV.

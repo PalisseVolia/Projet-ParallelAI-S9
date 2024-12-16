@@ -2,8 +2,8 @@ package com.parallelai;
 
 import java.util.Scanner;
 import java.util.List;
+import java.util.ArrayList;
 
-import com.parallelai.export.GameStateExporter;
 import com.parallelai.game.Board;
 import com.parallelai.game.Disc;
 import com.parallelai.game.Move;
@@ -34,9 +34,12 @@ public class GameManager {
     
     /** Joueur dont c'est le tour */
     private Player currentPlayer;
-    
+
     /** Indique si la partie est terminée */
     private boolean isGameOver;
+
+    /** Historique des états de jeu */
+    private List<Board> gameHistory = new ArrayList<>();
 
     /**
      * Constructeur pour une nouvelle partie interactive.
@@ -133,10 +136,6 @@ public class GameManager {
             currentPlayer = (currentPlayer == player1) ? player2 : player1;
         }
         
-        // Exporter l'historique de la partie
-        GameStateExporter exporter = new GameStateExporter("game_history.csv");
-        exporter.exportGame(gameHistory, board);
-        
         announceWinner();
     }
 
@@ -186,17 +185,7 @@ public class GameManager {
     }
 
     public static void main(String[] args) {
-        // Création des modèles pour les parties
-        Model model1 = new MinimaxModel();
-        Model model2 = new RandomModel();
-        
-        // Nombre de parties à jouer
-        int nbParties = 100; // Par exemple
-        
-        // Création de l'exporteur et lancement des parties
-        GameStateExporter exporter = new GameStateExporter("game_history.csv");
-        System.out.println("Lancement de " + nbParties + " parties...");
-        exporter.startGames(nbParties, model1, model2);
-        System.out.println("Toutes les parties ont été jouées et sauvegardées!");
+        GameManager game = new GameManager();
+        game.startGame();
     }
 }
