@@ -478,14 +478,14 @@ public class GameStateExporter {
     // Modifier le main pour tester la version parallèle
     public static void main(String[] args) {
         // Création de l'exporteur
-        GameStateExporter exporter = new GameStateExporter("unique_states.csv");
+        GameStateExporter exporter = new GameStateExporter("projet\\src\\main\\ressources\\data\\game_history.csv");
         
         // Création des modèles pour le test
         Model model1 = new MinimaxModel(); // Un modèle plus intelligent
         Model model2 = new RandomModel();   // Un modèle aléatoire
         
         // Configuration du test
-        int nbParties = 10000;  // Nombre de parties à jouer
+        int nbParties = 100;  // Nombre de parties à jouer
         int nbThreads = Runtime.getRuntime().availableProcessors(); // Utiliser tous les cœurs disponibles
         
         System.out.println("Début du test avec " + nbParties + " parties sur " + nbThreads + " threads...");

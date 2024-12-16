@@ -39,7 +39,7 @@ public class DatasetImporter {
                 
                 // Create output (single value between 0-1)
                 INDArray output = Nd4j.zeros(1, 1);
-                output.putScalar(0, Double.parseDouble(values[65]));
+                output.putScalar(0, Double.parseDouble(values[64]));
                 
                 dataset.add(new DataSet(input, output));
             }

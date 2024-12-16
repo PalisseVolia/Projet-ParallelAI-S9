@@ -11,8 +11,6 @@ import com.parallelai.game.Move;
 import com.parallelai.game.Player;
 import com.parallelai.players.HumanPlayer;
 import com.parallelai.players.UnifiedAIPlayer;
-import com.parallelai.models.MinimaxModel;
-import com.parallelai.models.RandomModel;
 import com.parallelai.models.utils.Model;
 import com.parallelai.models.utils.ModelRegistry;
 
@@ -137,10 +135,6 @@ public class GameManager {
             currentPlayer = (currentPlayer == player1) ? player2 : player1;
         }
         
-        // Exporter l'historique de la partie
-        GameStateExporter exporter = new GameStateExporter("game_history.csv");
-        exporter.exportGame(gameHistory, board);
-        
         announceWinner();
     }
 
@@ -233,17 +227,7 @@ public class GameManager {
     }
 
     public static void main(String[] args) {
-        // Création des modèles pour les parties
-        Model model1 = new MinimaxModel();
-        Model model2 = new RandomModel();
-        
-        // Nombre de parties à jouer
-        int nbParties = 100; // Par exemple
-        
-        // Création de l'exporteur et lancement des parties avec situations uniques
-        GameStateExporter exporter = new GameStateExporter("game_history.csv");
-        System.out.println("Lancement de " + nbParties + " parties...");
-        exporter.startGamesWithUniqueStates(nbParties, model1, model2);
-        System.out.println("Toutes les parties ont été jouées et analysées!");
+        GameManager game = new GameManager();
+        game.startGame();
     }
 }
