@@ -5,6 +5,7 @@ import java.util.List;
 
 import com.parallelai.models.MinimaxModel;
 import com.parallelai.models.RandomModel;
+import com.parallelai.models.CnnModel;
 
 /**
  * Registry for managing and providing access to AI models.
@@ -19,6 +20,7 @@ public class ModelRegistry {
         // Register all available models here
         registerModel("Random", () -> new RandomModel());
         registerModel("Minimax", () -> new MinimaxModel());
+        registerModel("CNN", () -> new CnnModel());
         // Add more models as they become available
     }
 
