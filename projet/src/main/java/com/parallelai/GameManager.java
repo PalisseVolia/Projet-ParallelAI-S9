@@ -226,8 +226,43 @@ public class GameManager {
         return isGameOver;
     }
 
+    public static void runGames(int numGames) {
+        int randomWins = 0;
+        int cnnWins = 0;
+        int ties = 0;
+
+        for (int i = 0; i < numGames; i++) {
+            Board board = new Board();
+            Model randomModel = ModelRegistry.createModel(0); // Random model
+            Model cnnModel = ModelRegistry.createModel(2); // CNN model
+
+            GameManager game = new GameManager(board, randomModel, cnnModel);
+            while (game.playNextMove()) {
+                // Continue playing until the game is over
+            }
+
+            int blackCount = game.getBoard().getDiscCount(Disc.BLACK);
+            int whiteCount = game.getBoard().getDiscCount(Disc.WHITE);
+
+            if (blackCount > whiteCount) {
+                randomWins++;
+            } else if (whiteCount > blackCount) {
+                cnnWins++;
+            } else {
+                ties++;
+            }
+        }
+
+        System.out.println("Results after " + numGames + " games:");
+        System.out.println("Random model wins: " + randomWins);
+        System.out.println("CNN model wins: " + cnnWins);
+        System.out.println("Ties: " + ties);
+    }
+
     public static void main(String[] args) {
-        GameManager game = new GameManager();
-        game.startGame();
+        // GameManager game = new GameManager();
+        // game.startGame();
+
+        runGames(100);
     }
 }

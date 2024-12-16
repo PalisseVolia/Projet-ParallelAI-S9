@@ -16,8 +16,8 @@ import java.io.*;
 
 public class CnnTraining {
     private static final int BOARD_SIZE = 8;
-    private static final int BATCH_SIZE = 32;
-    private static final int N_EPOCHS = 100;
+    private static final int BATCH_SIZE = 128;
+    private static final int N_EPOCHS = 10;
     
     public void train(String datasetPath) throws IOException {
         // Load and prepare data

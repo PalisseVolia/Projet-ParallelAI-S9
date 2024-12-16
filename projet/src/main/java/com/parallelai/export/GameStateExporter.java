@@ -485,7 +485,7 @@ public class GameStateExporter {
         Model model2 = new RandomModel();   // Un modèle aléatoire
         
         // Configuration du test
-        int nbParties = 100;  // Nombre de parties à jouer
+        int nbParties = 20000;  // Nombre de parties à jouer
         int nbThreads = Runtime.getRuntime().availableProcessors(); // Utiliser tous les cœurs disponibles
         
         System.out.println("Début du test avec " + nbParties + " parties sur " + nbThreads + " threads...");
