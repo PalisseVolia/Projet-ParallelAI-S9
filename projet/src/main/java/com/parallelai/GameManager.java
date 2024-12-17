@@ -11,6 +11,7 @@ import com.parallelai.game.Move;
 import com.parallelai.game.Player;
 import com.parallelai.players.HumanPlayer;
 import com.parallelai.players.UnifiedAIPlayer;
+import com.parallelai.players.UnifiedWeightedAIPlayer;
 import com.parallelai.models.utils.Model;
 import com.parallelai.models.utils.ModelRegistry;
 
@@ -62,6 +63,21 @@ public class GameManager {
         this.board = board;
         this.player1 = new UnifiedAIPlayer(Disc.BLACK, model1);
         this.player2 = new UnifiedAIPlayer(Disc.WHITE, model2);
+        this.currentPlayer = player1;
+        this.isGameOver = false;
+    }
+
+    /**
+     * Constructor for a game between two models with weighted selection
+     * @param board The game board
+     * @param model1 Model for player 1
+     * @param model2 Model for player 2
+     */
+    public GameManager(Board board, Model model1, Model model2, boolean Weighted) {
+        this.scanner = new Scanner(System.in);
+        this.board = board;
+        this.player1 = new UnifiedWeightedAIPlayer(Disc.BLACK, model1);
+        this.player2 = new UnifiedWeightedAIPlayer(Disc.WHITE, model2);
         this.currentPlayer = player1;
         this.isGameOver = false;
     }
@@ -227,16 +243,20 @@ public class GameManager {
     }
 
     public static void runGames(int numGames) {
-        int randomWins = 0;
-        int cnnWins = 0;
+        int model1Wins = 0;
+        int model2Wins = 0;
+        String model1Name = "";
+        String model2Name = "";
         int ties = 0;
 
         for (int i = 0; i < numGames; i++) {
             Board board = new Board();
-            Model randomModel = ModelRegistry.createModel(0); // Random model
-            Model cnnModel = ModelRegistry.createModel(2); // CNN model
+            Model model1 = ModelRegistry.createModel(0);
+            Model model2 = ModelRegistry.createModel(2);
+            model1Name = ModelRegistry.getAvailableModels().get(0).name;
+            model2Name = ModelRegistry.getAvailableModels().get(2).name;
 
-            GameManager game = new GameManager(board, randomModel, cnnModel);
+            GameManager game = new GameManager(board, model1, model2, true);
             while (game.playNextMove()) {
                 // Continue playing until the game is over
             }
@@ -245,17 +265,17 @@ public class GameManager {
             int whiteCount = game.getBoard().getDiscCount(Disc.WHITE);
 
             if (blackCount > whiteCount) {
-                randomWins++;
+                model1Wins++;
             } else if (whiteCount > blackCount) {
-                cnnWins++;
+                model2Wins++;
             } else {
                 ties++;
             }
         }
 
         System.out.println("Results after " + numGames + " games:");
-        System.out.println("Random model wins: " + randomWins);
-        System.out.println("CNN model wins: " + cnnWins);
+        System.out.println(model1Name + " model wins: " + model1Wins);
+        System.out.println(model2Name + " model wins: " + model2Wins);
         System.out.println("Ties: " + ties);
     }
 

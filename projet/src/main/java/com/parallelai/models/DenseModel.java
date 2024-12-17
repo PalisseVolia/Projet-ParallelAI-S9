@@ -12,21 +12,22 @@ import org.nd4j.linalg.factory.Nd4j;
 import java.io.File;
 import java.io.IOException;
 
-public class CnnModel implements Model {
+public class DenseModel implements Model {
     private MultiLayerNetwork network;
     private static final int BOARD_SIZE = 8;
+    private static final int INPUT_SIZE = BOARD_SIZE * BOARD_SIZE;
 
-    public CnnModel() {
+    public DenseModel() {
         try {
             // Load the trained model
-            String modelPath = "projet\\src\\main\\java\\com\\parallelai\\training\\models\\othello_cnn_model.zip";
+            String modelPath = "projet\\src\\main\\java\\com\\parallelai\\training\\models\\othello_dense_model.zip";
             File modelFile = new File(modelPath);
             if (!modelFile.exists()) {
                 throw new IOException("Model file not found at: " + modelFile.getAbsolutePath());
             }
             this.network = ModelSerializer.restoreMultiLayerNetwork(modelFile);
         } catch (IOException e) {
-            System.err.println("Error loading CNN model: " + e.getMessage());
+            System.err.println("Error loading Dense model: " + e.getMessage());
             e.printStackTrace();
         }
     }
@@ -42,7 +43,7 @@ public class CnnModel implements Model {
             Board boardCopy = board.copy();
             boardCopy.makeMove(move);
 
-            // Convert board state to input format expected by CNN
+            // Convert board state to input format expected by Dense network
             INDArray input = boardToINDArray(boardCopy);
             
             // Get model prediction
@@ -55,11 +56,12 @@ public class CnnModel implements Model {
     }
 
     private INDArray boardToINDArray(Board board) {
-        // Create a 4D array with shape [1, 1, 8, 8] (batch size, channels, height, width)
-        INDArray input = Nd4j.zeros(1, 1, BOARD_SIZE, BOARD_SIZE);
+        // Create a 2D array with shape [1, 64] (batch size, flattened board)
+        INDArray input = Nd4j.zeros(1, INPUT_SIZE);
         
         Disc[][] grid = board.getGrid();
-        // Fill the array with board state
+        // Fill the array with flattened board state
+        int idx = 0;
         for (int i = 0; i < BOARD_SIZE; i++) {
             for (int j = 0; j < BOARD_SIZE; j++) {
                 // Convert Disc enum to numerical value
@@ -70,7 +72,8 @@ public class CnnModel implements Model {
                 } else if (grid[i][j] == Disc.WHITE) {
                     value = -1;
                 }
-                input.putScalar(new int[]{0, 0, i, j}, value);
+                input.putScalar(new int[]{0, idx}, value);
+                idx++;
             }
         }
         
