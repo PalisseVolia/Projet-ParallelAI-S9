@@ -31,7 +31,12 @@ public class UnifiedAIPlayer extends Player {
                 Move move = new Move(i, j, color);
                 if (board.isValidMove(move, color)) {
                     validMoves.add(move);
-                    evaluations.add(model.evaluateMove(move, board));
+                    double eval = model.evaluateMove(move, board);
+                    // Invert evaluation for white player
+                    if (color == Disc.WHITE) {
+                        eval = 1.0 - eval;
+                    }
+                    evaluations.add(eval);
                 }
             }
         }

@@ -48,7 +48,7 @@ public class DenseModel implements Model {
             
             // Get model prediction
             INDArray output = network.output(input);
-            return 1-output.getDouble(0);
+            return output.getDouble(0);
         } catch (Exception e) {
             System.err.println("Error during move evaluation: " + e.getMessage());
             return 0.5; // Return neutral score on error

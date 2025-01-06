@@ -1,4 +1,3 @@
-
 package com.parallelai.models.utils;
 
 import com.parallelai.game.Board;
@@ -18,4 +17,12 @@ public interface Model {
      * @return Evaluation score between 0 (worst) and 1 (best)
      */
     double evaluateMove(Move move, Board board);
+    
+    /**
+     * Returns the name of the model implementation.
+     * @return String representing the model name
+     */
+    default String getName() {
+        return this.getClass().getSimpleName().replace("Model", "");
+    }
 }

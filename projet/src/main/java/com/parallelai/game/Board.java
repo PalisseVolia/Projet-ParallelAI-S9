@@ -45,6 +45,13 @@ public class Board {
     }
 
     /**
+     * Resets the board to its initial state with the four center pieces
+     */
+    public void reset() {
+        initializeBoard();
+    }
+
+    /**
      * Affiche l'état actuel du plateau.
      * Montre les pions noirs (X), blancs (O) et cases vides (.).
      */

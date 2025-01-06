@@ -48,7 +48,7 @@ public class GameManager {
     public GameManager() {
         this.scanner = new Scanner(System.in);
         this.board = new Board();
-        initializePlayers();
+        initializeGame();
         this.currentPlayer = player1; // Initialisation
     }
     
@@ -86,7 +86,7 @@ public class GameManager {
      * Configure les joueurs selon le mode de jeu choisi par l'utilisateur.
      * Propose 3 modes : Humain vs Humain, Humain vs IA, IA vs IA
      */
-    private void initializePlayers() {
+    private void initializeGame() {
         System.out.println("Choose game mode:");
         System.out.println("1. Human vs Human");
         System.out.println("2. Human vs AI");
@@ -103,8 +103,21 @@ public class GameManager {
                 player2 = new UnifiedAIPlayer(Disc.WHITE, selectAIModel("Select AI model for White"));
                 break;
             case 3:
-                player1 = new UnifiedAIPlayer(Disc.BLACK, selectAIModel("Select AI model for Black"));
-                player2 = new UnifiedAIPlayer(Disc.WHITE, selectAIModel("Select AI model for White"));
+                System.out.println("Choose AI type:");
+                System.out.println("1. Regular AI   - Best moves");
+                System.out.println("2. Weighted AI  - Weighted random selection");
+                int aiType = scanner.nextInt();
+                
+                Model model1 = selectAIModel("Select AI model for Black");
+                Model model2 = selectAIModel("Select AI model for White");
+                
+                if (aiType == 1) {
+                    player1 = new UnifiedAIPlayer(Disc.BLACK, model1);
+                    player2 = new UnifiedAIPlayer(Disc.WHITE, model2);
+                } else {
+                    player1 = new UnifiedWeightedAIPlayer(Disc.BLACK, model1);
+                    player2 = new UnifiedWeightedAIPlayer(Disc.WHITE, model2);
+                }
                 break;
         }
     }
@@ -196,16 +209,18 @@ public class GameManager {
     public boolean playNextMove() {
         if (isGameOver) return false;
         
-        if (board.hasValidMoves(currentPlayer.getColor())) {
-            Move move = currentPlayer.getMove(board);
-            if (move != null) {
-                board.makeMove(move);
-            }
-        } else {
+        if (!board.hasValidMoves(currentPlayer.getColor())) {
             if (!board.hasValidMoves(currentPlayer.getColor().opposite())) {
                 isGameOver = true;
                 return false;
             }
+            currentPlayer = (currentPlayer == player1) ? player2 : player1;
+            return true;
+        }
+
+        Move move = currentPlayer.getMove(board);
+        if (move != null) {
+            board.makeMove(move);
         }
         
         currentPlayer = (currentPlayer == player1) ? player2 : player1;
@@ -251,10 +266,10 @@ public class GameManager {
 
         for (int i = 0; i < numGames; i++) {
             Board board = new Board();
-            Model model1 = ModelRegistry.createModel(0);
-            Model model2 = ModelRegistry.createModel(2);
-            model1Name = ModelRegistry.getAvailableModels().get(0).name;
-            model2Name = ModelRegistry.getAvailableModels().get(2).name;
+            Model model1 = ModelRegistry.createModel(2);
+            Model model2 = ModelRegistry.createModel(3);
+            model1Name = ModelRegistry.getAvailableModels().get(2).name;
+            model2Name = ModelRegistry.getAvailableModels().get(3).name;
 
             GameManager game = new GameManager(board, model1, model2, true);
             while (game.playNextMove()) {
