@@ -419,6 +419,7 @@ public class GameStateExporter {
             this.uniqueStates = new ArrayList<>();
         }
         
+        @SuppressWarnings("deprecation")
         @Override
         public void run() {
             for (int i = 0; i < nbParties; i++) {
