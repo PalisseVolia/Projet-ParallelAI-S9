@@ -218,7 +218,7 @@ public class GameManager {
 
     private boolean processNextMove() {
         if (!board.hasValidMoves(currentPlayer.getColor())) {
-            System.out.println("No valid moves for " + currentPlayer.getColor());
+            // System.out.println("No valid moves for " + currentPlayer.getColor());
             if (!board.hasValidMoves(currentPlayer.getColor().opposite())) {
                 isGameOver = true;
                 return false;
@@ -226,7 +226,7 @@ public class GameManager {
             return true;
         }
 
-        System.out.println("Current player: " + currentPlayer.getColor());
+        // System.out.println("Current player: " + currentPlayer.getColor());
         Move move = currentPlayer.getMove(board);
         if (move != null) {
             board.makeMove(move);
@@ -272,7 +272,7 @@ public class GameManager {
     }
 
     public static void main(String[] args) {
-        NewGameManager game = new NewGameManager();
+        GameManager game = new GameManager();
         game.initialize();
     }
 }

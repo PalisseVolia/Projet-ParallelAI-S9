@@ -482,7 +482,7 @@ public class GameStateExporter {
         GameStateExporter exporter = new GameStateExporter("projet\\src\\main\\ressources\\data\\game_history.csv");
         
         // Création des modèles pour le test
-        Model model1 = new MinimaxModel(); // Un modèle plus intelligent
+        Model model1 = new RandomModel(); // Un modèle plus intelligent
         Model model2 = new RandomModel();   // Un modèle aléatoire
         
         // Configuration du test
