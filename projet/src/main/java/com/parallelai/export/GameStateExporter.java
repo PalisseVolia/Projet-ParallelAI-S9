@@ -700,10 +700,138 @@ public class GameStateExporter {
         System.out.println("Terminé! " + stateMap.size() + " situations uniques sauvegardées.");
     }
 
+    public void startGamesWithUniqueStatesParallelNoSync(int nbParties, Model model1, Model model2, int nbThreads) {
+        System.out.println("Début des " + nbParties + " parties avec " + nbThreads + " threads (sans synchronisation)...\n");
+        ProgressBar.initDisplay(nbThreads);
+        
+        try (ExecutorService executor = Executors.newFixedThreadPool(nbThreads)) {
+            List<Future<Map<String, double[]>>> futures = new ArrayList<>();
+            int partiesPerThread = nbParties / nbThreads;
+            
+            // Lancer les threads avec leurs propres HashMap
+            for (int i = 0; i < nbThreads; i++) {
+                int partiesForThisThread = (i == nbThreads - 1) ? 
+                    partiesPerThread + (nbParties % nbThreads) : partiesPerThread;
+                    
+                GameThreadNoSync thread = new GameThreadNoSync(partiesForThisThread, model1, model2, 
+                    new ProgressBar(partiesForThisThread, i));
+                    
+                futures.add(executor.submit(() -> {
+                    thread.execute();
+                    return thread.getStateMap();
+                }));
+            }
+            
+            // Fusionner les résultats à la fin
+            Map<String, double[]> finalMap = new HashMap<>();
+            for (Future<Map<String, double[]>> future : futures) {
+                try {
+                    Map<String, double[]> threadResult = future.get();
+                    // Fusion manuelle des maps
+                    threadResult.forEach((key, value) -> 
+                        finalMap.merge(key, value, (existing, newVal) -> {
+                            double[] merged = existing.clone();
+                            merged[64] += newVal[64];
+                            merged[65] += newVal[65];
+                            return merged;
+                        })
+                    );
+                } catch (Exception e) {
+                    System.err.println("Erreur thread: " + e.getMessage());
+                }
+            }
+            
+            exportStateMap(finalMap);
+            
+            System.out.print(String.format("\033[%dH\n", nbThreads + 2));
+            System.out.println("Terminé! " + finalMap.size() + " situations uniques sauvegardées.");
+        }
+    }
+
+    private class GameThreadNoSync {
+        private final int nbParties;
+        private final Model model1, model2;
+        private final ProgressBar progressBar;
+        private final Map<String, double[]> stateMap;
+        private final StateBuffer stateBuffer;
+        private static final int BATCH_SIZE = 100;
+
+        public GameThreadNoSync(int nbParties, Model model1, Model model2, ProgressBar progressBar) {
+            this.nbParties = nbParties;
+            this.model1 = model1;
+            this.model2 = model2;
+            this.progressBar = progressBar;
+            this.stateMap = new HashMap<>();  // HashMap locale au lieu de ConcurrentHashMap
+            this.stateBuffer = new StateBuffer();
+        }
+
+        public void execute() {
+            List<GameState> gameStates = new ArrayList<>(BATCH_SIZE);
+            
+            for (int i = 0; i < nbParties; i++) {
+                gameStates.add(processGame());
+                
+                if (gameStates.size() >= BATCH_SIZE) {
+                    processBatchLocal(gameStates);
+                    gameStates.clear();
+                }
+                
+                if ((i + 1) % 10 == 0) progressBar.update(i + 1);
+            }
+            
+            if (!gameStates.isEmpty()) {
+                processBatchLocal(gameStates);
+            }
+            
+            progressBar.update(nbParties);
+        }
+
+        private GameState processGame() {
+            Board board = new Board();
+            GameManager game = new GameManager(board, model1, model2);
+            List<CompressedState> history = new ArrayList<>();
+            
+            while (game.playNextMove()) {
+                history.add(stateBuffer.compressState(board));
+            }
+
+            return new GameState(history, calculateGameResult(board));
+        }
+
+        private void processBatchLocal(List<GameState> gameStates) {
+            for (GameState game : gameStates) {
+                double finalResult = game.result == 1 ? 1.0 : 
+                                   game.result == 0 ? 0.5 : 0.0;
+
+                for (CompressedState state : game.history) {
+                    String key = state.toString();
+                    processState(key, state, finalResult);
+                }
+            }
+        }
+
+        private void processState(String key, CompressedState state, double finalResult) {
+            double[] existing = stateMap.get(key);
+            if (existing == null) {
+                double[] newState = state.decompress();
+                newState[64] = finalResult;
+                newState[65] = 1.0;
+                stateMap.put(key, newState);
+            } else {
+                existing[64] += finalResult;
+                existing[65] += 1.0;
+            }
+        }
+
+        public Map<String, double[]> getStateMap() {
+            return stateMap;
+        }
+    }
+
     public static void main(String[] args) {
         GameStateExporter exporter = new GameStateExporter("projet\\src\\main\\ressources\\data\\game_history.csv");
         
-        Model model1 = new RandomModel();
+        Model model1 = new MinimaxModel();
         Model model2 = new RandomModel();
          
         long startTime = System.currentTimeMillis();
@@ -725,11 +853,16 @@ public class GameStateExporter {
         exporter.startGamesWithUniqueStatesParallel(nbParties, model1, model2, nbThreads);
         long endTimePar = System.currentTimeMillis();
         double executionTimePar = (endTimePar - startTimePar) / 1000.0;
+
+        long startTimePar2 = System.currentTimeMillis();
+        exporter.startGamesWithUniqueStatesParallelNoSync(nbParties, model1, model2, nbThreads);
+        long endTimePar2 = System.currentTimeMillis();
+        double executionTimePar2 = (endTimePar2 - startTimePar2) / 1000.0;
         
         // Affichage des résultats
-        // System.out.println("\n=== Comparaison des performances ===");
-        // System.out.printf("Version séquentielle : %.2f secondes\n", executionTimeSeq);
-        // System.out.printf("Version parallèle   : %.2f secondes\n", executionTimePar);
+        System.out.println("\n=== Comparaison des performances ===");
+        System.out.printf("Version hasmap : %.2f secondes\n", executionTimePar2);
+        System.out.printf("Version sans hashmap   : %.2f secondes\n", executionTimePar);
         // System.out.printf("Accélération       : %.2fx\n", executionTimeSeq / executionTimePar);
     }
 }
