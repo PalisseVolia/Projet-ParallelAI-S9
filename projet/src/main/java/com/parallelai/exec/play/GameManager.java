@@ -1,4 +1,4 @@
-package com.parallelai.exec;
+package com.parallelai.exec.play;
 
 import java.util.Scanner;
 import java.util.List;
@@ -6,7 +6,7 @@ import java.util.ArrayList;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import com.parallelai.exec.GameRunner.AIType;
+import com.parallelai.exec.play.GameRunner.AIType;
 import com.parallelai.export.GameStateExporter;
 import com.parallelai.game.*;
 import com.parallelai.players.*;

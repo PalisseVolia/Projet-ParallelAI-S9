@@ -13,7 +13,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.Base64;
 import java.util.LinkedHashMap;
 
-import com.parallelai.exec.GameManager;
+import com.parallelai.exec.play.GameManager;
 import com.parallelai.game.Board;
 import com.parallelai.game.Disc;
 import com.parallelai.models.MinimaxModel;
