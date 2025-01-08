@@ -1,12 +1,15 @@
 package com.parallelai.training;
 
+import com.parallelai.exec.train.TrainerMetrics;
 import com.parallelai.training.utils.DatasetImporter;
+
 import org.deeplearning4j.nn.conf.MultiLayerConfiguration;
 import org.deeplearning4j.nn.conf.NeuralNetConfiguration;
 import org.deeplearning4j.nn.conf.inputs.InputType;
 import org.deeplearning4j.nn.conf.layers.*;
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
 import org.deeplearning4j.nn.weights.WeightInit;
+import org.deeplearning4j.optimize.listeners.ScoreIterationListener;
 import org.deeplearning4j.util.ModelSerializer;
 import org.nd4j.linalg.activations.Activation;
 import org.nd4j.linalg.dataset.api.iterator.DataSetIterator;
@@ -19,7 +22,7 @@ public class CnnTraining {
     private static final int BATCH_SIZE = 128;
     private static final int N_EPOCHS = 10;
     
-    public void train(String datasetPath) throws IOException {
+    public void train(String datasetPath, String modelName) throws IOException {
         // Load and prepare data
         DatasetImporter importer = new DatasetImporter();
         DataSetIterator iterator = importer.importDataset(datasetPath, BATCH_SIZE);
@@ -58,14 +61,19 @@ public class CnnTraining {
         MultiLayerNetwork model = new MultiLayerNetwork(conf);
         model.init();
 
+        // Add listeners for metrics
+        model.setListeners(new TrainerMetrics(N_EPOCHS), new ScoreIterationListener(10));
+
         // Train model
+        System.out.println("Starting training...");
         for (int i = 0; i < N_EPOCHS; i++) {
             model.fit(iterator);
             iterator.reset();
             System.out.println("Completed epoch " + (i + 1) + "/" + N_EPOCHS);
         }
 
-        // Save model
-        ModelSerializer.writeModel(model, "projet\\src\\main\\java\\com\\parallelai\\training\\models\\othello_cnn_model.zip", true);
+        // Save model with custom name
+        String modelPath = String.format("projet\\src\\main\\ressources\\models\\CNN\\%s.zip", modelName);
+        ModelSerializer.writeModel(model, modelPath, true);
     }
 }

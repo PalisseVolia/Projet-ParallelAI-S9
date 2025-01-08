@@ -40,25 +40,32 @@ public class TrainerManager {
         return datasets.get(choice - 1).getAbsolutePath();
     }
     
+    private String getModelName(Scanner scanner) {
+        System.out.println("\nEnter a name for the trained model:");
+        scanner.nextLine(); // Clear the buffer
+        return scanner.nextLine();
+    }
+    
     public void startTraining() {
         try (Scanner scanner = new Scanner(System.in)) {
             String datasetPath = selectDataset(scanner);
             
             System.out.println("\nChoose model type to train:");
-            System.out.println("1. Dense Neural Network");
+            System.out.println("1. Dense Neural Network (MLP)");
             System.out.println("2. Convolutional Neural Network (CNN)");
             
             int choice = scanner.nextInt();
+            String modelName = getModelName(scanner);
             
             try {
                 switch (choice) {
                     case 1:
                         System.out.println("Training Dense Neural Network...");
-                        new DenseTraining().train(datasetPath);
+                        new DenseTraining().train(datasetPath, modelName);
                         break;
                     case 2:
                         System.out.println("Training CNN...");
-                        new CnnTraining().train(datasetPath);
+                        new CnnTraining().train(datasetPath, modelName);
                         break;
                     default:
                         System.out.println("Invalid choice. Please select 1 or 2.");
