@@ -3,6 +3,8 @@ package com.parallelai;
 import java.util.Scanner;
 import java.util.List;
 import java.util.ArrayList;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import com.parallelai.export.GameStateExporter;
 import com.parallelai.game.*;
@@ -28,6 +30,13 @@ public class GameManager {
     private int model1Wins;
     private int model2Wins;
     private int ties;
+
+    // Add these fields for thread-safe statistics
+    private final AtomicInteger atomicModel1Wins = new AtomicInteger(0);
+    private final AtomicInteger atomicModel2Wins = new AtomicInteger(0);
+    private final AtomicInteger atomicTies = new AtomicInteger(0);
+    private final AtomicInteger gamesCompleted = new AtomicInteger(0);
+    private int totalGames;
 
     public GameManager() {
         this.scanner = new Scanner(System.in);
@@ -106,12 +115,22 @@ public class GameManager {
         AIType aiType = promptAIType();
         System.out.println("Enter number of games (1 for single game):");
         int numGames = scanner.nextInt();
+        totalGames = numGames;
 
         Model model1 = selectAIModel("Select AI model for Black");
         Model model2 = selectAIModel("Select AI model for White");
         
+        // Create players with the selected models and AI type
+        if (aiType == AIType.REGULAR) {
+            player1 = new UnifiedAIPlayer(Disc.BLACK, model1);
+            player2 = new UnifiedAIPlayer(Disc.WHITE, model2);
+        } else {
+            player1 = new UnifiedWeightedAIPlayer(Disc.BLACK, model1);
+            player2 = new UnifiedWeightedAIPlayer(Disc.WHITE, model2);
+        }
+        currentPlayer = player1;
+        
         if (numGames == 1) {
-            setupAIPlayers(model1, model2, aiType);
             startGame();
         } else {
             runMultipleGames(numGames, model1, model2, aiType);
@@ -130,48 +149,53 @@ public class GameManager {
     }
 
     /**
-     * Sets up AI players based on selected models and type
-     */
-    private void setupAIPlayers(Model model1, Model model2, AIType aiType) {
-        if (aiType == AIType.REGULAR) {
-            player1 = new UnifiedAIPlayer(Disc.BLACK, model1);
-            player2 = new UnifiedAIPlayer(Disc.WHITE, model2);
-        } else {
-            player1 = new UnifiedWeightedAIPlayer(Disc.BLACK, model1);
-            player2 = new UnifiedWeightedAIPlayer(Disc.WHITE, model2);
-        }
-        currentPlayer = player1;
-    }
-
-    /**
      * Runs multiple games and displays statistics
      */
     private void runMultipleGames(int numGames, Model model1, Model model2, AIType aiType) {
         model1Name = model1.getName();
         model2Name = model2.getName();
         
+        int processors = Runtime.getRuntime().availableProcessors();
+        ExecutorService executor = Executors.newFixedThreadPool(processors);
+        List<Future<GameResult>> futures = new ArrayList<>();
+        
+        System.out.println("Progress: ");
+        
+        // Submit all games to the executor
         for (int i = 0; i < numGames; i++) {
-            board.reset();
-            setupAIPlayers(model1, model2, aiType);
-            isGameOver = false;
-            
-            while (playNextMove()) {
-                // Game continues
-            }
-            
-            updateGameStatistics();
+            GameRunner runner = new GameRunner(model1, model2, aiType);
+            futures.add(executor.submit(runner));
         }
         
-        displayGameStatistics(numGames);
-    }
-
-    private void updateGameStatistics() {
-        int blackCount = board.getDiscCount(Disc.BLACK);
-        int whiteCount = board.getDiscCount(Disc.WHITE);
+        // Collect results
+        for (Future<GameResult> future : futures) {
+            try {
+                GameResult result = future.get();
+                switch (result) {
+                    case BLACK_WINS -> atomicModel1Wins.incrementAndGet();
+                    case WHITE_WINS -> atomicModel2Wins.incrementAndGet();
+                    case TIE -> atomicTies.incrementAndGet();
+                }
+            } catch (InterruptedException | ExecutionException e) {
+                e.printStackTrace();
+            }
+        }
         
-        if (blackCount > whiteCount) model1Wins++;
-        else if (whiteCount > blackCount) model2Wins++;
-        else ties++;
+        executor.shutdown();
+        try {
+            executor.awaitTermination(1, TimeUnit.HOURS);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        
+        System.out.println(); // New line after progress bar
+        
+        // Update the original statistics variables for compatibility
+        model1Wins = atomicModel1Wins.get();
+        model2Wins = atomicModel2Wins.get();
+        ties = atomicTies.get();
+        
+        displayGameStatistics(numGames);
     }
 
     private void displayGameStatistics(int numGames) {
@@ -218,15 +242,18 @@ public class GameManager {
 
     private boolean processNextMove() {
         if (!board.hasValidMoves(currentPlayer.getColor())) {
-            // System.out.println("No valid moves for " + currentPlayer.getColor());
+            if (player1 instanceof HumanPlayer || player2 instanceof HumanPlayer) {
+                System.out.println("No valid moves for " + currentPlayer.getColor());
+            }
             if (!board.hasValidMoves(currentPlayer.getColor().opposite())) {
                 isGameOver = true;
                 return false;
             }
             return true;
         }
-
-        // System.out.println("Current player: " + currentPlayer.getColor());
+        if (player1 instanceof HumanPlayer || player2 instanceof HumanPlayer) {
+            System.out.println("Current player: " + currentPlayer.getColor());
+        }
         Move move = currentPlayer.getMove(board);
         if (move != null) {
             board.makeMove(move);
@@ -274,5 +301,86 @@ public class GameManager {
     public static void main(String[] args) {
         GameManager game = new GameManager();
         game.initialize();
+    }
+
+    private class GameRunner implements Callable<GameResult> {
+        private final Model model1;
+        private final Model model2;
+        private final AIType aiType;
+        private final Board localBoard;
+        private Player localPlayer1;
+        private Player localPlayer2;
+        private Player localCurrentPlayer;
+
+        public GameRunner(Model model1, Model model2, AIType aiType) {
+            this.model1 = model1;
+            this.model2 = model2;
+            this.aiType = aiType;
+            this.localBoard = new Board();
+            setupLocalPlayers();
+        }
+
+        private void setupLocalPlayers() {
+            if (aiType == AIType.REGULAR) {
+                localPlayer1 = new UnifiedAIPlayer(Disc.BLACK, model1);
+                localPlayer2 = new UnifiedAIPlayer(Disc.WHITE, model2);
+            } else {
+                localPlayer1 = new UnifiedWeightedAIPlayer(Disc.BLACK, model1);
+                localPlayer2 = new UnifiedWeightedAIPlayer(Disc.WHITE, model2);
+            }
+            localCurrentPlayer = localPlayer1;
+        }
+
+        @Override
+        public GameResult call() {
+            while (true) {
+                if (!processLocalMove()) {
+                    break;
+                }
+                localCurrentPlayer = (localCurrentPlayer == localPlayer1) ? localPlayer2 : localPlayer1;
+            }
+            
+            int blackCount = localBoard.getDiscCount(Disc.BLACK);
+            int whiteCount = localBoard.getDiscCount(Disc.WHITE);
+            
+            gamesCompleted.incrementAndGet();
+            updateProgressBar();
+            
+            if (blackCount > whiteCount) return GameResult.BLACK_WINS;
+            else if (whiteCount > blackCount) return GameResult.WHITE_WINS;
+            else return GameResult.TIE;
+        }
+
+        private boolean processLocalMove() {
+            if (!localBoard.hasValidMoves(localCurrentPlayer.getColor())) {
+                if (!localBoard.hasValidMoves(localCurrentPlayer.getColor().opposite())) {
+                    return false;
+                }
+                return true;
+            }
+            Move move = localCurrentPlayer.getMove(localBoard);
+            if (move != null) {
+                localBoard.makeMove(move);
+            }
+            return true;
+        }
+    }
+
+    private enum GameResult { BLACK_WINS, WHITE_WINS, TIE }
+
+    private void updateProgressBar() {
+        int completed = gamesCompleted.get();
+        int percentage = completed * 100 / totalGames;
+        int bars = percentage / 2;
+        
+        synchronized (System.out) {
+            StringBuilder progressBar = new StringBuilder("\r[");
+            for (int j = 0; j < 50; j++) {
+                progressBar.append(j < bars ? "=" : " ");
+            }
+            progressBar.append("] ").append(percentage).append("% (")
+                      .append(completed).append("/").append(totalGames).append(")");
+            System.out.print(progressBar);
+        }
     }
 }
