@@ -1,6 +1,6 @@
 package com.parallelai.export.implementations;
 
-import com.parallelai.GameManager;
+import com.parallelai.exec.play.GameManager;
 import com.parallelai.export.GameStateExporter;
 import com.parallelai.export.utilities.GameExporterUtils.*;
 import com.parallelai.game.Board;

@@ -13,7 +13,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.Base64;
 import java.util.LinkedHashMap;
 
-import com.parallelai.GameManager;
+import com.parallelai.exec.play.GameManager;
 import com.parallelai.export.implementations.ClassicThreadExporter;
 import com.parallelai.export.implementations.OptimizedExporter;
 import com.parallelai.export.implementations.ParallelExporter;
