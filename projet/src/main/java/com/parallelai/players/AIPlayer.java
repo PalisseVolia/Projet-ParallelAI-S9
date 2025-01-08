@@ -12,10 +12,10 @@ import com.parallelai.models.utils.Model;
 /**
  * Unified AI player that uses a model to evaluate and select moves.
  */
-public class UnifiedAIPlayer extends Player {
+public class AIPlayer extends Player {
     private final Model model;
 
-    public UnifiedAIPlayer(Disc color, Model model) {
+    public AIPlayer(Disc color, Model model) {
         super(color);
         this.model = model;
     }
