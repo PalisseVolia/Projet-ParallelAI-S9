@@ -292,7 +292,7 @@ public class FileDatabaseManager {
         }
     }
 
-    private static String[] getFileList(int type) {
+    public static String[] getFileList(int type) {
         java.util.List<String> files = new java.util.ArrayList<>();
         String sql = type == 3 ? 
             "SELECT file_name FROM dataSet" :
