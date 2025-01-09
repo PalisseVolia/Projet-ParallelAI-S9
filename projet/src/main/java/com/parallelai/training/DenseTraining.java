@@ -20,13 +20,11 @@ import java.io.*;
 public class DenseTraining {
     private static final int BOARD_SIZE = 8;
     private static final int INPUT_SIZE = BOARD_SIZE * BOARD_SIZE;
-    private static final int BATCH_SIZE = 128;
-    private static final int N_EPOCHS = 10;
     
-    public void train(String datasetPath, String modelName) throws IOException {
+    public void train(String datasetPath, String modelName, int batchSize, int nEpochs) throws IOException {
         // Load and prepare data
         DatasetImporter importer = new DatasetImporter();
-        DataSetIterator iterator = importer.importDataset(datasetPath, BATCH_SIZE);
+        DataSetIterator iterator = importer.importDataset(datasetPath, batchSize);
         
         // Configure network
         MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
@@ -59,14 +57,14 @@ public class DenseTraining {
         model.init();
 
         // Add listeners for metrics
-        model.setListeners(new TrainerMetrics(N_EPOCHS), new ScoreIterationListener(10));
+        model.setListeners(new TrainerMetrics(nEpochs), new ScoreIterationListener(10));
 
         // Train model
         System.out.println("Starting training...");
-        for (int i = 0; i < N_EPOCHS; i++) {
+        for (int i = 0; i < nEpochs; i++) {
             model.fit(iterator);
             iterator.reset();
-            System.out.println("Completed epoch " + (i + 1) + "/" + N_EPOCHS);
+            System.out.println("Completed epoch " + (i + 1) + "/" + nEpochs);
         }
 
         // Save model with custom name

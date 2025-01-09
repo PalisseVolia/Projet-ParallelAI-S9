@@ -46,6 +46,24 @@ public class TrainerManager {
         return scanner.nextLine();
     }
     
+    private int getBatchSize(Scanner scanner) {
+        System.out.println("\nEnter batch size (recommended: 32-128):");
+        int batchSize = scanner.nextInt();
+        if (batchSize < 1) {
+            throw new IllegalArgumentException("Batch size must be positive");
+        }
+        return batchSize;
+    }
+    
+    private int getEpochs(Scanner scanner) {
+        System.out.println("\nEnter number of epochs (recommended: 10-100):");
+        int epochs = scanner.nextInt();
+        if (epochs < 1) {
+            throw new IllegalArgumentException("Number of epochs must be positive");
+        }
+        return epochs;
+    }
+    
     public void startTraining() {
         try (Scanner scanner = new Scanner(System.in)) {
             String datasetPath = selectDataset(scanner);
@@ -56,16 +74,18 @@ public class TrainerManager {
             
             int choice = scanner.nextInt();
             String modelName = getModelName(scanner);
+            int batchSize = getBatchSize(scanner);
+            int epochs = getEpochs(scanner);
             
             try {
                 switch (choice) {
                     case 1:
                         System.out.println("Training Dense Neural Network...");
-                        new DenseTraining().train(datasetPath, modelName);
+                        new DenseTraining().train(datasetPath, modelName, batchSize, epochs);
                         break;
                     case 2:
                         System.out.println("Training CNN...");
-                        new CnnTraining().train(datasetPath, modelName);
+                        new CnnTraining().train(datasetPath, modelName, batchSize, epochs);
                         break;
                     default:
                         System.out.println("Invalid choice. Please select 1 or 2.");
