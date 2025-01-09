@@ -6,8 +6,20 @@ import java.util.List;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.Base64;
+import java.util.LinkedHashMap;
 
-import com.parallelai.GameManager;
+import com.parallelai.exec.play.GameManager;
+import com.parallelai.export.implementations.ClassicThreadExporter;
+import com.parallelai.export.implementations.OptimizedExporter;
+import com.parallelai.export.implementations.ParallelExporter;
+import com.parallelai.export.utilities.GameExporterUtils.CompressedState;
+import com.parallelai.export.utilities.GameExporterUtils.ProgressBar;
+import com.parallelai.export.utilities.GameExporterUtils.StateBuffer;
 import com.parallelai.game.Board;
 import com.parallelai.game.Disc;
 import com.parallelai.models.MinimaxModel;
@@ -26,6 +38,7 @@ import com.parallelai.models.utils.Model;
  * - 1 colonne pour le joueur courant (-1=noir, 1=blanc)
  * - 1 colonne pour le résultat final (-1=défaite, 0=nul, 1=victoire)
  */
+@SuppressWarnings("unused")
 public class GameStateExporter {
     /** Chemin du fichier CSV de sortie */
     private final String outputPath;
@@ -230,7 +243,7 @@ public class GameStateExporter {
      * @param finalBoard Plateau final
      * @return 1 pour victoire des noirs, -1 pour victoire des blancs, 0 pour égalité
      */
-    private int calculateGameResult(Board finalBoard) {
+    public int calculateGameResult(Board finalBoard) {
         int blackCount = finalBoard.getDiscCount(Disc.BLACK);
         int whiteCount = finalBoard.getDiscCount(Disc.WHITE);
         
@@ -340,161 +353,229 @@ public class GameStateExporter {
         }
     }
 
-    public void startGamesWithUniqueStatesParallel(int nbParties, Model model1, Model model2, int nbThreads) {
-        System.out.println("Début des " + nbParties + " parties avec " + nbThreads + " threads...");
+    public void exportStateMap(Map<String, double[]> stateMap) {
+        try (FileWriter writer = new FileWriter(outputPath)) {
+            for (double[] state : stateMap.values()) {
+                StringBuilder line = new StringBuilder();
+                
+                // État du plateau
+                for (int i = 0; i<64; i++) {
+                    line.append(state[i]).append(",");
+                }
+                
+                // Moyenne des résultats
+                line.append(state[64] / state[65]).append("\n");
+                writer.write(line.toString());
+            }
+        } catch (IOException e) {
+            System.err.println("Erreur lors de l'écriture du fichier CSV: " + e.getMessage());
+        }
+    }
+
+    public void streamMerge(List<Map<String, double[]>> threadResults, final Map<String, double[]> finalMap) {
         
-        // Créer les threads et leurs résultats associés
-        List<GameThread> threads = new ArrayList<>();
+        // Parcourir les résultats thread par thread
+        for (int i = 0; i < threadResults.size(); i++) {
+            Map<String, double[]> currentResult = threadResults.get(i);
+            
+            // Pour le premier thread, copier directement les résultats
+            if (i == 0) {
+                currentResult.forEach((key, value) -> finalMap.put(key, value));
+            } else {
+                // Pour les autres threads, fusionner sans créer de nouveaux objets
+                currentResult.forEach((key, value) -> {
+                    double[] existing = finalMap.get(key);
+                    if (existing != null) {
+                        existing[64] += value[64];
+                        existing[65] += value[65];
+                    } else {
+                        finalMap.put(key, value);
+                    }
+                });
+            }
+            
+            // Libérer la mémoire immédiatement
+            threadResults.set(i, null);
+        }
+    }
+
+    public void startGamesWithUniqueStatesSequential(int nbParties, Model model1, Model model2) {
+        System.out.println("Début des " + nbParties + " parties (version séquentielle)...");
+        
+        Map<String, double[]> stateMap = new HashMap<>();
+        StateBuffer stateBuffer = new StateBuffer();
+        
+        for (int i = 0; i < nbParties; i++) {
+            Board board = new Board();
+            GameManager game = new GameManager(board, model1, model2);
+            List<CompressedState> history = new ArrayList<>();
+            
+            // Jouer et collecter l'historique
+            while (game.playNextMove()) {
+                history.add(stateBuffer.compressState(board));
+            }
+            
+            // Calculer le résultat final
+            double finalResult;
+            int result = calculateGameResult(board);
+            finalResult = result == 1 ? 1.0 : result == 0 ? 0.5 : 0.0;
+            
+            // Traiter chaque état du jeu
+            for (CompressedState state : history) {
+                String key = state.toString();
+                stateMap.compute(key, (k, v) -> {
+                    if (v == null) {
+                        double[] newState = state.decompress();
+                        newState[64] = finalResult;
+                        newState[65] = 1.0;
+                        return newState;
+                    } else {
+                        v[64] += finalResult;
+                        v[65] += 1.0;
+                        return v;
+                    }
+                });
+            }
+            
+            if ((i + 1) % 100 == 0) {
+                System.out.printf("Progression : %d/%d parties terminées (%.1f%%)\n", 
+                    i + 1, nbParties, ((i + 1) * 100.0) / nbParties);
+            }
+        }
+        
+        exportStateMap(stateMap);
+        System.out.println("Terminé! " + stateMap.size() + " situations uniques sauvegardées.");
+    }
+
+
+    public void startGamesParallel(int nbParties, Model model1, Model model2, int nbThreads) {
+        System.out.println("Début des " + nbParties + " parties avec " + nbThreads + " threads...\n");
+        ProgressBar.initDisplay(nbThreads);
+        
+        Thread[] threads = new Thread[nbThreads];
         int partiesPerThread = nbParties / nbThreads;
         
-        // Lancer les threads
         for (int i = 0; i < nbThreads; i++) {
-            int partiesForThisThread = (i == nbThreads - 1) ? 
+            final int threadId = i;
+            final int partiesForThisThread = (i == nbThreads - 1) ? 
                 partiesPerThread + (nbParties % nbThreads) : partiesPerThread;
+            
+            ProgressBar progressBar = new ProgressBar(partiesForThisThread, threadId);
+            
+            threads[i] = new Thread(() -> {
+                int gamesCompleted = 0;
                 
-            GameThread thread = new GameThread(partiesForThisThread, model1, model2);
-            threads.add(thread);
-            thread.start();
+                for (int j = 0; j < partiesForThisThread; j++) {
+                    Board board = new Board();
+                    GameManager game = new GameManager(board, model1, model2);
+                    game.startGame();
+                    
+                    gamesCompleted++;
+                    if (gamesCompleted % 10 == 0) {
+                        progressBar.update(gamesCompleted);
+                    }
+                }
+                
+                progressBar.update(partiesForThisThread);
+            });
+            
+            threads[i].start();
         }
         
-        // Attendre la fin de tous les threads
-        List<List<double[]>> threadResults = new ArrayList<>();
-        for (GameThread thread : threads) {
-            try {
+        try {
+            for (Thread thread : threads) {
                 thread.join();
-                threadResults.add(thread.getUniqueStates());
-            } catch (InterruptedException e) {
-                System.err.println("Thread interrompu: " + e.getMessage());
             }
+        } catch (InterruptedException e) {
+            System.err.println("Interruption pendant l'attente des threads");
+            Thread.currentThread().interrupt();
+            return;
         }
         
-        // Fusionner les résultats
-        List<double[]> mergedStates = mergeThreadResults(threadResults);
-        
-        // Exporter le résultat final
-        exportUniqueStatesArray(mergedStates);
-        System.out.println("Terminé! " + mergedStates.size() + " situations uniques sauvegardées.");
-    }
-    
-    private List<double[]> mergeThreadResults(List<List<double[]>> threadResults) {
-        Map<String, double[]> mergedMap = new HashMap<>();
-        
-        // Parcourir les résultats de chaque thread
-        for (List<double[]> threadResult : threadResults) {
-            for (double[] state : threadResult) {
-                String key = stateToString(state);
-                
-                if (mergedMap.containsKey(key)) {
-                    double[] existing = mergedMap.get(key);
-                    existing[64] += state[64];    // Ajouter les sommes
-                    existing[65] += state[65];    // Ajouter les occurrences
-                } else {
-                    mergedMap.put(key, state.clone());
-                }
-            }
-        }
-        
-        return new ArrayList<>(mergedMap.values());
-    }
-    
-    private String stateToString(double[] state) {
-        StringBuilder sb = new StringBuilder();
-        // Uniquement les 64 premiers éléments (état du plateau)
-        for (int i = 0; i < 64; i++) {
-            sb.append(state[i]).append(",");
-        }
-        return sb.toString();
-    }
-    
-    private class GameThread extends Thread {
-        private final int nbParties;
-        private final Model model1;
-        private final Model model2;
-        private List<double[]> uniqueStates;
-        
-        public GameThread(int nbParties, Model model1, Model model2) {
-            this.nbParties = nbParties;
-            this.model1 = model1;
-            this.model2 = model2;
-            this.uniqueStates = new ArrayList<>();
-        }
-        
-        @Override
-        public void run() {
-            for (int i = 0; i < nbParties; i++) {
-                Board board = new Board();
-                GameManager game = new GameManager(board, model1, model2);
-                List<Board> gameHistory = new ArrayList<>();
-                
-                while (game.playNextMove()) {
-                    gameHistory.add(board.copy());
-                }
-                
-                // Calculer le résultat final
-                double finalResult;
-                int gameResult = calculateGameResult(board);
-                if (gameResult == 1) {
-                    finalResult = 1.0;      // Victoire noire
-                } else if (gameResult == -1) {
-                    finalResult = 0.0;      // Défaite noire
-                } else {
-                    finalResult = 0.5;      // Match nul
-                }
-                
-                // Traiter chaque état du jeu
-                for (Board state : gameHistory) {
-                    double[] currentState = boardToArray(state);
-                    boolean found = false;
-                    
-                    // Chercher si la situation existe déjà
-                    for (double[] existingState : uniqueStates) {
-                        if (isSameState(currentState, existingState)) {
-                            existingState[64] += finalResult;  // Somme des résultats
-                            existingState[65] += 1.0;         // Nombre d'occurrences
-                            found = true;
-                            break;
-                        }
-                    }
-                    
-                    if (!found) {
-                        currentState[64] = finalResult;  // Premier résultat
-                        currentState[65] = 1.0;         // Première occurrence
-                        uniqueStates.add(currentState);
-                    }
-                }
-
-                if ((i + 1) % 10 == 0) {
-                    System.out.println("Thread " + Thread.currentThread().getId() + 
-                                     ": " + (i + 1) + "/" + nbParties + " parties terminées");
-                }
-            }
-        }
-        
-        public List<double[]> getUniqueStates() {
-            return uniqueStates;
-        }
+        System.out.print(String.format("\033[%dH\n", nbThreads + 2));
+        System.out.println("Terminé! " + nbParties + " parties ont été sauvegardées dans " + outputPath);
     }
 
-    // Modifier le main pour tester la version parallèle
     public static void main(String[] args) {
-        // Création de l'exporteur
-        GameStateExporter exporter = new GameStateExporter("projet\\src\\main\\ressources\\data\\game_history.csv");
+        String outputPath = "projet\\src\\main\\ressources\\data\\game_history.csv";
+        GameStateExporter baseExporter = new GameStateExporter(outputPath);
+        ParallelExporter parallelExporter = new ParallelExporter(outputPath);
+        ClassicThreadExporter classicExporter = new ClassicThreadExporter(outputPath);
+        OptimizedExporter optimizedExporter = new OptimizedExporter(outputPath);
         
-        // Création des modèles pour le test
-        Model model1 = new MinimaxModel(); // Un modèle plus intelligent
-        Model model2 = new RandomModel();   // Un modèle aléatoire
-        
-        // Configuration du test
-        int nbParties = 20000;  // Nombre de parties à jouer
-        int nbThreads = Runtime.getRuntime().availableProcessors(); // Utiliser tous les cœurs disponibles
-        
+        Model model1 = new RandomModel();
+        Model model2 = new RandomModel();
+         
+        int nbParties = 80000;
+        int nbThreads = Runtime.getRuntime().availableProcessors();
+
         System.out.println("Début du test avec " + nbParties + " parties sur " + nbThreads + " threads...");
         
-        long startTime = System.currentTimeMillis();
-        exporter.startGamesWithUniqueStatesParallel(nbParties, model1, model2, nbThreads);
-        long endTime = System.currentTimeMillis();
+        // Warm-up
+        System.out.println("Warm-up...");
+        baseExporter.startGamesWithUniqueStatesSequential(1000, model1, model2);
         
-        double executionTime = (endTime - startTime) / 1000.0;
-        System.out.println("Test terminé en " + executionTime + " secondes");
+        try {
+            Thread.sleep(2000);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+
+        System.out.println("\n=== Début des tests de performance ===");
+
+        // Test séquentiel
+        System.out.println("\n=== Test séquentiel ===");
+        long startTimeSeq = System.currentTimeMillis();
+        //baseExporter.startGamesWithUniqueStatesSequential(nbParties, model1, model2);
+        long endTimeSeq = System.currentTimeMillis();
+        double executionTimeSeq = (endTimeSeq - startTimeSeq) / 1000.0;
+        
+        try {
+            Thread.sleep(2000);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+
+        // Tests parallèles
+        System.out.println("\n=== Tests parallèles (" + nbThreads + " threads) ===");
+        
+        // Test avec ConcurrentHashMap
+        long startTimePar = System.currentTimeMillis();
+        parallelExporter.startGamesWithUniqueStatesParallel(nbParties, model1, model2, nbThreads);
+        long endTimePar = System.currentTimeMillis();
+        double executionTimePar = (endTimePar - startTimePar) / 1000.0;
+
+        // Test sans synchronisation
+        long startTimePar2 = System.currentTimeMillis();
+        parallelExporter.startGamesWithUniqueStatesParallelNoSync(nbParties, model1, model2, nbThreads);
+        long endTimePar2 = System.currentTimeMillis();
+        double executionTimePar2 = (endTimePar2 - startTimePar2) / 1000.0;
+        
+        // Test avec threads classiques
+        long startTimeClassic = System.currentTimeMillis();
+        classicExporter.startGamesWithUniqueStatesClassicThreads(nbParties, model1, model2, nbThreads);
+        long endTimeClassic = System.currentTimeMillis();
+        double executionTimeClassic = (endTimeClassic - startTimeClassic) / 1000.0;
+        
+        // Test version optimisée
+        long startTimeOptimized = System.currentTimeMillis();
+        optimizedExporter.startGamesWithUniqueStatesOptimized(nbParties, model1, model2, nbThreads);
+        long endTimeOptimized = System.currentTimeMillis();
+        double executionTimeOptimized = (endTimeOptimized - startTimeOptimized) / 1000.0;
+
+        // Affichage des résultats
+        System.out.println("\n=== Comparaison des performances ===");
+        System.out.printf("Nombre de parties: %d\n", nbParties);
+        System.out.printf("Nombre de threads: %d\n", nbThreads);
+
+        //System.out.printf("Version Séquentielle     : %.2f secondes (référence)\n", executionTimeSeq);
+        System.out.printf("Version HashMap          : %.2f secondes (x%.2f)\n", 
+            executionTimePar2, executionTimeSeq/executionTimePar2);
+        System.out.printf("Version ConcurrentMap    : %.2f secondes (x%.2f)\n", 
+            executionTimePar, executionTimeSeq/executionTimePar);
+        System.out.printf("Version Thread classique : %.2f secondes (x%.2f)\n", 
+            executionTimeClassic, executionTimeSeq/executionTimeClassic);
+        System.out.printf("Version Optimisée        : %.2f secondes (x%.2f)\n", 
+            executionTimeOptimized, executionTimeSeq/executionTimeOptimized);
     }
 }
