@@ -1,4 +1,4 @@
-package com.parallelai;
+package com.parallelai.exec.play;
 
 import java.util.Scanner;
 import java.util.List;
@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import com.parallelai.exec.play.GameRunner.AIType;
 import com.parallelai.export.GameStateExporter;
 import com.parallelai.game.*;
 import com.parallelai.players.*;
@@ -14,7 +15,6 @@ import com.parallelai.models.utils.*;
 public class GameManager {
     // Game mode enums for cleaner code
     private enum GameMode { HUMAN_VS_HUMAN, HUMAN_VS_AI, AI_VS_AI }
-    private enum AIType { REGULAR, WEIGHTED }
 
     private final Scanner scanner;
     private final Board board;
@@ -48,8 +48,8 @@ public class GameManager {
     public GameManager(Board board, Model model1, Model model2) {
         this.scanner = new Scanner(System.in);
         this.board = board;
-        this.player1 = new UnifiedAIPlayer(Disc.BLACK, model1);
-        this.player2 = new UnifiedAIPlayer(Disc.WHITE, model2);
+        this.player1 = new AIPlayer(Disc.BLACK, model1);
+        this.player2 = new AIPlayer(Disc.WHITE, model2);
         this.currentPlayer = player1;
         this.gameHistory = new ArrayList<>();
         this.isGameOver = false;
@@ -99,7 +99,7 @@ public class GameManager {
             case HUMAN_VS_AI:
                 player1 = new HumanPlayer(Disc.BLACK, scanner);
                 Model aiModel = selectAIModel("Select AI model for White");
-                player2 = new UnifiedAIPlayer(Disc.WHITE, aiModel);
+                player2 = new AIPlayer(Disc.WHITE, aiModel);
                 break;
             case AI_VS_AI:
                 // Players will be set up in handleAIGame()
@@ -122,11 +122,11 @@ public class GameManager {
         
         // Create players with the selected models and AI type
         if (aiType == AIType.REGULAR) {
-            player1 = new UnifiedAIPlayer(Disc.BLACK, model1);
-            player2 = new UnifiedAIPlayer(Disc.WHITE, model2);
+            player1 = new AIPlayer(Disc.BLACK, model1);
+            player2 = new AIPlayer(Disc.WHITE, model2);
         } else {
-            player1 = new UnifiedWeightedAIPlayer(Disc.BLACK, model1);
-            player2 = new UnifiedWeightedAIPlayer(Disc.WHITE, model2);
+            player1 = new AIWeightedPlayer(Disc.BLACK, model1);
+            player2 = new AIWeightedPlayer(Disc.WHITE, model2);
         }
         currentPlayer = player1;
         
@@ -163,7 +163,10 @@ public class GameManager {
         
         // Submit all games to the executor
         for (int i = 0; i < numGames; i++) {
-            GameRunner runner = new GameRunner(model1, model2, aiType);
+            GameRunner runner = new GameRunner(model1, model2, aiType, () -> {
+                gamesCompleted.incrementAndGet();
+                updateProgressBar();
+            });
             futures.add(executor.submit(runner));
         }
         
@@ -302,71 +305,6 @@ public class GameManager {
         GameManager game = new GameManager();
         game.initialize();
     }
-
-    private class GameRunner implements Callable<GameResult> {
-        private final Model model1;
-        private final Model model2;
-        private final AIType aiType;
-        private final Board localBoard;
-        private Player localPlayer1;
-        private Player localPlayer2;
-        private Player localCurrentPlayer;
-
-        public GameRunner(Model model1, Model model2, AIType aiType) {
-            this.model1 = model1;
-            this.model2 = model2;
-            this.aiType = aiType;
-            this.localBoard = new Board();
-            setupLocalPlayers();
-        }
-
-        private void setupLocalPlayers() {
-            if (aiType == AIType.REGULAR) {
-                localPlayer1 = new UnifiedAIPlayer(Disc.BLACK, model1);
-                localPlayer2 = new UnifiedAIPlayer(Disc.WHITE, model2);
-            } else {
-                localPlayer1 = new UnifiedWeightedAIPlayer(Disc.BLACK, model1);
-                localPlayer2 = new UnifiedWeightedAIPlayer(Disc.WHITE, model2);
-            }
-            localCurrentPlayer = localPlayer1;
-        }
-
-        @Override
-        public GameResult call() {
-            while (true) {
-                if (!processLocalMove()) {
-                    break;
-                }
-                localCurrentPlayer = (localCurrentPlayer == localPlayer1) ? localPlayer2 : localPlayer1;
-            }
-            
-            int blackCount = localBoard.getDiscCount(Disc.BLACK);
-            int whiteCount = localBoard.getDiscCount(Disc.WHITE);
-            
-            gamesCompleted.incrementAndGet();
-            updateProgressBar();
-            
-            if (blackCount > whiteCount) return GameResult.BLACK_WINS;
-            else if (whiteCount > blackCount) return GameResult.WHITE_WINS;
-            else return GameResult.TIE;
-        }
-
-        private boolean processLocalMove() {
-            if (!localBoard.hasValidMoves(localCurrentPlayer.getColor())) {
-                if (!localBoard.hasValidMoves(localCurrentPlayer.getColor().opposite())) {
-                    return false;
-                }
-                return true;
-            }
-            Move move = localCurrentPlayer.getMove(localBoard);
-            if (move != null) {
-                localBoard.makeMove(move);
-            }
-            return true;
-        }
-    }
-
-    private enum GameResult { BLACK_WINS, WHITE_WINS, TIE }
 
     private void updateProgressBar() {
         int completed = gamesCompleted.get();

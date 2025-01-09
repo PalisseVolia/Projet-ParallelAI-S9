@@ -65,19 +65,4 @@ public class DenseTraining {
         // Save model
         ModelSerializer.writeModel(model, "projet\\src\\main\\java\\com\\parallelai\\training\\models\\othello_dense_model.zip", true);
     }
-
-    public static void main(String[] args) {
-        try {
-            String datasetPath = "projet\\src\\main\\ressources\\data\\game_history.csv";
-            File dataFile = new File(datasetPath);
-            if (!dataFile.exists()) {
-                System.err.println("Error: Dataset file not found at: " + dataFile.getAbsolutePath());
-                return;
-            }
-            new DenseTraining().train(datasetPath);
-        } catch (IOException e) {
-            System.err.println("Error during training: " + e.getMessage());
-            e.printStackTrace();
-        }
-    }
 }
