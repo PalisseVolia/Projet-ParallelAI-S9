@@ -23,3 +23,5 @@ projet/target/classes/com/parallelai/export/implementations/ParallelExporter$Gam
 projet/target/classes/com/parallelai/export/implementations/ParallelExporter$GameThreadNoSync.class
 projet/target/classes/com/parallelai/export/implementations/ClassicThreadExporter.class
 projet/target/classes/com/parallelai/export/implementations/ClassicThreadExporter.class
+projet/target/classes/com/parallelai/export/implementations/ClassicThreadExporter.class
+projet/target/classes/com/parallelai/export/implementations/ParallelExporter$GameThreadNoSync.class
