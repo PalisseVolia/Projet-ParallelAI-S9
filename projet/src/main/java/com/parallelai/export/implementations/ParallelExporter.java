@@ -216,6 +216,8 @@ public class ParallelExporter extends GameStateExporter {
         }
     }
 
+    
+
         private class GameThreadNoSync {
         private final int nbParties;
         private final Model model1, model2;

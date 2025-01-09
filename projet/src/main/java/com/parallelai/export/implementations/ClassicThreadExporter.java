@@ -106,6 +106,59 @@ public class ClassicThreadExporter extends GameStateExporter {
         System.out.println("Terminé! " + finalMap.size() + " situations uniques sauvegardées.");
     }
 
+    public void startGamesNoSave(int nbParties, Model model1, Model model2, int nbThreads) {
+        System.out.println("Début des " + nbParties + " parties avec " + nbThreads + " threads (sans sauvegarde)...\n");
+        ProgressBar.initDisplay(nbThreads);
+
+        Thread[] threads = new Thread[nbThreads];
+        int partiesPerThread = nbParties / nbThreads;
+
+        for (int i = 0; i < nbThreads; i++) {
+            final int threadId = i;
+            final int partiesForThisThread = (i == nbThreads - 1) ? 
+                partiesPerThread + (nbParties % nbThreads) : partiesPerThread;
+
+            ProgressBar progressBar = new ProgressBar(partiesForThisThread, threadId);
+
+            threads[i] = new Thread(() -> {
+                int gamesCompleted = 0;
+                
+                for (int game = 0; game < partiesForThisThread; game++) {
+                    Board board = new Board();
+                    GameManager gameManager = new GameManager(board, model1, model2);
+                    
+                    // Jouer la partie jusqu'à la fin sans sauvegarder
+                    while (gameManager.playNextMove()) {
+                        // Continue jusqu'à la fin de la partie
+                    }
+                    
+                    gamesCompleted++;
+                    if (gamesCompleted % 100 == 0) {
+                        progressBar.update(gamesCompleted);
+                    }
+                }
+                
+                progressBar.update(partiesForThisThread);
+            });
+
+            threads[i].start();
+        }
+
+        try {
+            for (Thread thread : threads) {
+                thread.join();
+            }
+        } catch (InterruptedException e) {
+            System.err.println("Interruption pendant l'attente des threads");
+            Thread.currentThread().interrupt();
+            return;
+        }
+
+        // Move cursor below progress bars
+        System.out.print(String.format("\033[%dH\n", nbThreads + 2));
+        System.out.println("Terminé! " + nbParties + " parties ont été jouées.");
+    }
+
     private void processBatchLocal(List<GameState> batch, Map<String, double[]> localMap, double finalResult) {
         for (GameState game : batch) {
             for (CompressedState state : game.history) {
