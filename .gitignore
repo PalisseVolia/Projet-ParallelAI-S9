@@ -9,3 +9,11 @@ projet/src/main/ressources/evaldata_multitache/~$1000_parties.xlsx
 projet/src/main/ressources/evaldata_multitache/1000_parties.xlsx
 projet/src/main/ressources/data/game_history.csv
 projet/src/main/ressources/data/game_history.csv
+projet/target/classes/com/parallelai/export/experimentation/MultiTacheExp_1vs8.class
+projet/target/classes/com/parallelai/export/implementations/ClassicThreadExporter.class
+projet/target/classes/com/parallelai/export/implementations/ParallelExporter$GameThreadNoSync.class
+projet/src/main/ressources/graph.mlx
+projet/target/classes/com/parallelai/export/implementations/ClassicThreadExporter.class
+projet/target/classes/com/parallelai/export/implementations/ParallelExporter$GameThreadNoSync.class
+projet/target/classes/com/parallelai/export/implementations/ClassicThreadExporter.class
+projet/target/classes/com/parallelai/export/implementations/ParallelExporter$GameThreadNoSync.class
