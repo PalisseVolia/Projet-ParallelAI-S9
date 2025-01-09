@@ -203,7 +203,7 @@ public class GameStateExporter {
             System.err.println("Erreur lors de l'écriture du fichier CSV: " + e.getMessage());
         }
         
-        System.out.println("Terminé! " + nbParties + " parties ont été jouées.");
+        System.out.println("Terminé! " + nbParties + "ont été jouées.");
     }
 
     private void exportGameDirectly(List<Board> gameStates, Board finalBoard, FileWriter writer) throws IOException {
@@ -221,7 +221,7 @@ public class GameStateExporter {
             Disc[][] grid = board.getGrid();
             
             // État du plateau
-            for (int row = 0; row < 8; row++) {
+            for (int row = 0; i < 8; row++) {
                 for (int col = 0; col < 8; col++) {
                     int value = grid[row][col] == Disc.BLACK ? 1 : 
                               grid[row][col] == Disc.WHITE ? -1 : 0;
@@ -496,6 +496,135 @@ public class GameStateExporter {
         System.out.println("Terminé! " + nbParties + " parties ont été sauvegardées dans " + outputPath);
     }
 
+    public void startGamesWithProgress(int nbParties, Model model1, Model model2) {
+        System.out.println("Début des " + nbParties + " parties...\n");
+        ProgressBar progressBar = new ProgressBar(nbParties, 0);
+        
+        Map<String, double[]> stateMap = new HashMap<>();
+        StateBuffer stateBuffer = new StateBuffer();
+        
+        for (int i = 0; i<nbParties; i++) {
+            Board board = new Board();
+            GameManager game = new GameManager(board, model1, model2);
+            List<CompressedState> history = new ArrayList<>();
+            
+            // Jouer et collecter l'historique
+            while (game.playNextMove()) {
+                history.add(stateBuffer.compressState(board));
+            }
+            
+            // Calculer le résultat final
+            double finalResult;
+            int result = calculateGameResult(board);
+            finalResult = result == 1 ? 1.0 : result == 0 ? 0.5 : 0.0;
+            
+            // Traiter chaque état du jeu
+            for (CompressedState state : history) {
+                String key = state.toString();
+                stateMap.compute(key, (k, v) -> {
+                    if (v == null) {
+                        double[] newState = state.decompress();
+                        newState[64] = finalResult;
+                        newState[65] = 1.0;
+                        return newState;
+                    } else {
+                        v[64] += finalResult;
+                        v[65] += 1.0;
+                        return v;
+                    }
+                });
+            }
+            
+            if ((i + 1) % 10 == 0) {
+                progressBar.update(i + 1);
+            }
+        }
+        
+        progressBar.update(nbParties);
+        exportStateMap(stateMap);
+        System.out.println("\nTerminé! " + stateMap.size() + " situations uniques sauvegardées dans " + outputPath);
+    }
+
+    public void startGamesParallelWithProgress(int nbParties, Model model1, Model model2, int nbThreads) {
+        System.out.println("Début des " + nbParties + " parties avec " + nbThreads + " threads...\n");
+        ProgressBar.initDisplay(nbThreads);
+        
+        List<Map<String, double[]>> threadResults = new ArrayList<>(nbThreads);
+        Thread[] threads = new Thread[nbThreads];
+        int partiesPerThread = nbParties / nbThreads;
+        
+        for (int i = 0; i < nbThreads; i++) {
+            final int threadId = i;
+            final int partiesForThisThread = (i == nbThreads - 1) ? 
+                partiesPerThread + (nbParties % nbThreads) : partiesPerThread;
+            
+            Map<String, double[]> threadMap = new HashMap<>();
+            threadResults.add(threadMap);
+            ProgressBar progressBar = new ProgressBar(partiesForThisThread, threadId);
+            
+            threads[i] = new Thread(() -> {
+                StateBuffer stateBuffer = new StateBuffer();
+                
+                for (int j = 0; j < partiesForThisThread; j++) {
+                    Board board = new Board();
+                    GameManager game = new GameManager(board, model1, model2);
+                    List<CompressedState> history = new ArrayList<>();
+                    
+                    while (game.playNextMove()) {
+                        history.add(stateBuffer.compressState(board));
+                    }
+                    
+                    double finalResult;
+                    int result = calculateGameResult(board);
+                    finalResult = result == 1 ? 1.0 : result == 0 ? 0.5 : 0.0;
+                    
+                    for (CompressedState state : history) {
+                        String key = state.toString();
+                        threadMap.compute(key, (k, v) -> {
+                            if (v == null) {
+                                double[] newState = state.decompress();
+                                newState[64] = finalResult;
+                                newState[65] = 1.0;
+                                return newState;
+                            } else {
+                                v[64] += finalResult;
+                                v[65] += 1.0;
+                                return v;
+                            }
+                        });
+                    }
+                    
+                    if ((j + 1) % 10 == 0) {
+                        progressBar.update(j + 1);
+                    }
+                }
+                progressBar.update(partiesForThisThread);
+            });
+            
+            threads[i].start();
+        }
+        
+        try {
+            for (Thread thread : threads) {
+                thread.join();
+            }
+        } catch (InterruptedException e) {
+            System.err.println("Interruption pendant l'attente des threads");
+            Thread.currentThread().interrupt();
+            return;
+        }
+        
+        // Fusion des résultats de tous les threads
+        Map<String, double[]> finalMap = new HashMap<>();
+        streamMerge(threadResults, finalMap);
+        
+        // Export des résultats
+        exportStateMap(finalMap);
+        
+        System.out.print(String.format("\033[%dH\n", nbThreads + 2));
+        System.out.println("Terminé! " + finalMap.size() + " situations uniques sauvegardées dans " + outputPath);
+    }
+
     public static void main(String[] args) {
         String outputPath = "projet\\src\\main\\ressources\\data\\game_history.csv";
         GameStateExporter baseExporter = new GameStateExporter(outputPath);
@@ -506,7 +635,7 @@ public class GameStateExporter {
         Model model1 = new RandomModel();
         Model model2 = new RandomModel();
          
-        int nbParties = 80000;
+        int nbParties = 20000;
         int nbThreads = Runtime.getRuntime().availableProcessors();
 
         System.out.println("Début du test avec " + nbParties + " parties sur " + nbThreads + " threads...");
@@ -523,12 +652,26 @@ public class GameStateExporter {
 
         System.out.println("\n=== Début des tests de performance ===");
 
-        // Test séquentiel
-        System.out.println("\n=== Test séquentiel ===");
-        long startTimeSeq = System.currentTimeMillis();
-        //baseExporter.startGamesWithUniqueStatesSequential(nbParties, model1, model2);
-        long endTimeSeq = System.currentTimeMillis();
-        double executionTimeSeq = (endTimeSeq - startTimeSeq) / 1000.0;
+        // Test séquentiel avec progression
+        System.out.println("\n=== Test séquentiel avec progression ===");
+        long startTimeSeqProg = System.currentTimeMillis();
+        baseExporter.startGamesWithProgress(nbParties, model1, model2);
+        long endTimeSeqProg = System.currentTimeMillis();
+        double executionTimeSeqProg = (endTimeSeqProg - startTimeSeqProg) / 1000.0;
+
+        try {
+            Thread.sleep(2000);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+
+        // Test parallèle avec progression
+        System.out.println("\n=== Test parallèle avec progression ===");
+        long startTimeParProg = System.currentTimeMillis();
+        baseExporter.startGamesParallelWithProgress(nbParties, model1, model2, nbThreads);
+        long endTimeParProg = System.currentTimeMillis();
+        double executionTimeParProg = (endTimeParProg - startTimeParProg) / 1000.0;
+
         
         try {
             Thread.sleep(2000);
@@ -557,25 +700,22 @@ public class GameStateExporter {
         long endTimeClassic = System.currentTimeMillis();
         double executionTimeClassic = (endTimeClassic - startTimeClassic) / 1000.0;
         
-        // Test version optimisée
-        long startTimeOptimized = System.currentTimeMillis();
-        optimizedExporter.startGamesWithUniqueStatesOptimized(nbParties, model1, model2, nbThreads);
-        long endTimeOptimized = System.currentTimeMillis();
-        double executionTimeOptimized = (endTimeOptimized - startTimeOptimized) / 1000.0;
-
+   
         // Affichage des résultats
         System.out.println("\n=== Comparaison des performances ===");
         System.out.printf("Nombre de parties: %d\n", nbParties);
         System.out.printf("Nombre de threads: %d\n", nbThreads);
 
-        //System.out.printf("Version Séquentielle     : %.2f secondes (référence)\n", executionTimeSeq);
-        System.out.printf("Version HashMap          : %.2f secondes (x%.2f)\n", 
-            executionTimePar2, executionTimeSeq/executionTimePar2);
-        System.out.printf("Version ConcurrentMap    : %.2f secondes (x%.2f)\n", 
-            executionTimePar, executionTimeSeq/executionTimePar);
-        System.out.printf("Version Thread classique : %.2f secondes (x%.2f)\n", 
-            executionTimeClassic, executionTimeSeq/executionTimeClassic);
-        System.out.printf("Version Optimisée        : %.2f secondes (x%.2f)\n", 
-            executionTimeOptimized, executionTimeSeq/executionTimeOptimized);
+        System.out.printf("Version Séquentielle + Progress  : %.2f secondes\n", 
+            executionTimeSeqProg);
+        System.out.printf("Version Parallèle + Progress     : %.2f secondes (x%.2f)\n", 
+            executionTimeParProg, executionTimeSeqProg/executionTimeParProg);
+        System.out.printf("Version HashMap                  : %.2f secondes (x%.2f)\n", 
+            executionTimePar2, executionTimeSeqProg/executionTimePar2);
+        System.out.printf("Version ConcurrentMap            : %.2f secondes (x%.2f)\n", 
+            executionTimePar, executionTimeSeqProg/executionTimePar);
+        System.out.printf("Version Thread classique         : %.2f secondes (x%.2f)\n", 
+            executionTimeClassic, executionTimeSeqProg/executionTimeClassic);
+      
     }
 }
