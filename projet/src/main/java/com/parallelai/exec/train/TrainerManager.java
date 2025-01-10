@@ -2,8 +2,13 @@ package com.parallelai.exec.train;
 
 import com.parallelai.training.CnnTraining;
 import com.parallelai.training.DenseTraining;
+import com.parallelai.database.FileDatabaseManager;
+
+import org.nd4j.evaluation.regression.RegressionEvaluation;
+import org.deeplearning4j.util.ModelSerializer;
 import java.io.File;
 import java.io.IOException;
+import java.text.DecimalFormat;
 import java.util.Scanner;
 import java.util.Arrays;
 import java.util.List;
@@ -64,6 +69,38 @@ public class TrainerManager {
         return epochs;
     }
     
+    private void saveModelWithMetrics(String baseModelName, String modelType, TrainerResult result) throws IOException {
+        DecimalFormat df = new DecimalFormat("0.000");
+        RegressionEvaluation eval = result.getEvaluation();
+        
+        // Save model with metrics in the name (MSE, RMSE, R²)
+        String metricsPrefix = String.format("%s_%s_%s_",
+            df.format(eval.meanSquaredError(0)),
+            df.format(eval.rootMeanSquaredError(0)),
+            df.format(eval.rSquared(0)));
+            
+        String finalModelName = metricsPrefix + baseModelName;
+        String modelPath = String.format("projet\\src\\main\\ressources\\models\\%s\\%s.zip", 
+            modelType, finalModelName);
+            
+        // Print final metrics
+        System.out.println("\nFinal Metrics:");
+        System.out.println("MSE: " + eval.meanSquaredError(0));
+        System.out.println("RMSE: " + eval.rootMeanSquaredError(0));
+        System.out.println("R²: " + eval.rSquared(0));
+        
+        // Ensure directory exists
+        new File(modelPath).getParentFile().mkdirs();
+        
+        // Save model locally
+        ModelSerializer.writeModel(result.getModel(), modelPath, true);
+        System.out.println("Model saved locally as: " + finalModelName);
+        
+        // Save model to database
+        int modelTypeCode = modelType.equals("CNN") ? 1 : 2;
+        FileDatabaseManager.insertFile(modelPath, modelTypeCode);
+    }
+    
     public void startTraining() {
         try (Scanner scanner = new Scanner(System.in)) {
             String datasetPath = selectDataset(scanner);
@@ -78,14 +115,17 @@ public class TrainerManager {
             int epochs = getEpochs(scanner);
             
             try {
+                TrainerResult result;
                 switch (choice) {
                     case 1:
                         System.out.println("Training Dense Neural Network...");
-                        new DenseTraining().train(datasetPath, modelName, batchSize, epochs);
+                        result = new DenseTraining().train(datasetPath, modelName, batchSize, epochs);
+                        saveModelWithMetrics(modelName, "MLP", result);
                         break;
                     case 2:
                         System.out.println("Training CNN...");
-                        new CnnTraining().train(datasetPath, modelName, batchSize, epochs);
+                        result = new CnnTraining().train(datasetPath, modelName, batchSize, epochs);
+                        saveModelWithMetrics(modelName, "CNN", result);
                         break;
                     default:
                         System.out.println("Invalid choice. Please select 1 or 2.");
