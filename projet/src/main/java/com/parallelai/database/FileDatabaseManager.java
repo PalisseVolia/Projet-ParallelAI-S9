@@ -292,6 +292,46 @@ public class FileDatabaseManager {
         }
     }
 
+    // Nouvelle surcharge de downloadFile avec chemin personnalisé
+    public static void downloadFile(String fileName, String customPath, int type) {
+        String sql = type == 3 ? 
+            "SELECT file_data FROM dataSet WHERE file_name = ?" :
+            "SELECT file_data FROM model WHERE file_name = ? AND model_type = ?";
+
+        try (Connection connection = DriverManager.getConnection(URL, USER, PASSWORD);
+             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+            
+            preparedStatement.setString(1, fileName);
+            if (type != 3) {
+                preparedStatement.setString(2, type == 1 ? "CNN" : "MLP");
+            }
+
+            try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                if (resultSet.next()) {
+                    try (InputStream inputStream = resultSet.getBinaryStream("file_data")) {
+                        // Créer le dossier parent si nécessaire
+                        new File(customPath).getParentFile().mkdirs();
+
+                        // Écrire le fichier
+                        try (FileOutputStream outputStream = new FileOutputStream(customPath)) {
+                            byte[] buffer = new byte[1024];
+                            int bytesRead;
+                            while ((bytesRead = inputStream.read(buffer)) != -1) {
+                                outputStream.write(buffer, 0, bytesRead);
+                            }
+                            System.out.println("File downloaded successfully to: " + customPath);
+                        }
+                    }
+                } else {
+                    System.out.println("File not found in the database.");
+                }
+            }
+        } catch (SQLException | IOException e) {
+            System.out.println("Error during file download:");
+            e.printStackTrace();
+        }
+    }
+
     public static String[] getFileList(int type) {
         java.util.List<String> files = new java.util.ArrayList<>();
         String sql = type == 3 ? 

@@ -7,7 +7,6 @@ import java.util.List;
 
 import com.parallelai.export.GameStateExporter;
 import com.parallelai.export.implementations.ClassicThreadExporter;
-import com.parallelai.export.implementations.OptimizedExporter;
 import com.parallelai.export.implementations.ParallelExporter;
 import com.parallelai.models.RandomModel;
 import com.parallelai.models.utils.Model;
@@ -37,7 +36,7 @@ public class MultiTacheExp_DiffFonc {
         List<PerformanceResult> results = new ArrayList<>();
         
         // Initialisation des exporters
-        GameStateExporter baseExporter = new GameStateExporter(GAME_PATH);
+        GameStateExporter baseExporter = new ParallelExporter(GAME_PATH);
         ParallelExporter parallelExporter = new ParallelExporter(GAME_PATH);
         ClassicThreadExporter classicExporter = new ClassicThreadExporter(GAME_PATH);
         
@@ -91,7 +90,7 @@ public class MultiTacheExp_DiffFonc {
             // Test threads classiques
             System.out.println("Test avec threads classiques...");
             startTime = System.currentTimeMillis();
-            classicExporter.startGamesWithUniqueStatesClassicThreads(nbParties, model1, model2, NB_THREADS);
+            classicExporter.startGamesWithUniqueStatesClassicThreads(nbParties, model1, model2, NB_THREADS,false);
             result.classicThreadTime = System.currentTimeMillis() - startTime;
             pause();
             

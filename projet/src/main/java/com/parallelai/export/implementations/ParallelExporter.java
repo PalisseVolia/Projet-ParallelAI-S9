@@ -41,8 +41,9 @@ public class ParallelExporter extends GameStateExporter {
                 try {
                     future.get().forEach((key, value) -> 
                         globalStateMap.merge(key, value, (existing, newVal) -> {
-                            existing[64] += newVal[64];
-                            existing[65] += newVal[65];
+                            existing[65] += newVal[65]; // Somme totale
+                            existing[66] += newVal[66]; // Nombre d'occurrences
+                            // existing[64] sera recalculé à l'export
                             return existing;
                         })
                     );
@@ -135,12 +136,13 @@ public class ParallelExporter extends GameStateExporter {
             localBuffer.compute(key, (k, v) -> {
                 if (v == null) {
                     double[] newState = state.decompress();
-                    newState[64] = finalResult;
-                    newState[65] = 1.0;
+                    newState[64] = 0; // Moyenne (calculée à l'export)
+                    newState[65] = finalResult; // Somme totale
+                    newState[66] = 1.0; // Nombre d'occurrences
                     return newState;
                 } else {
-                    v[64] += finalResult;
-                    v[65] += 1.0;
+                    v[65] += finalResult; // Ajouter à la somme
+                    v[66] += 1.0; // Incrémenter occurrences
                     return v;
                 }
             });
@@ -149,8 +151,8 @@ public class ParallelExporter extends GameStateExporter {
         private void synchronizeWithGlobalMap() {
             localBuffer.forEach((key, value) -> 
                 stateMap.merge(key, value.clone(), (existing, newVal) -> {
-                    existing[64] += newVal[64];
-                    existing[65] += newVal[65];
+                    existing[65] += newVal[65]; // Somme totale
+                    existing[66] += newVal[66]; // Nombre d'occurrences
                     return existing;
                 })
             );
@@ -285,12 +287,13 @@ public class ParallelExporter extends GameStateExporter {
                     double[] existing = stateMap.get(key);
                     if (existing == null) {
                         existing = state.decompress();
-                        existing[64] = finalResult;
-                        existing[65] = 1.0;
+                        existing[64] = 0; // Moyenne (calculée à l'export)
+                        existing[65] = finalResult; // Somme totale
+                        existing[66] = 1.0; // Nombre d'occurrences
                         stateMap.put(key, existing);
                     } else {
-                        existing[64] += finalResult;
-                        existing[65] += 1.0;
+                        existing[65] += finalResult; // Ajouter à la somme
+                        existing[66] += 1.0; // Incrémenter occurrences
                     }
                 }
             }

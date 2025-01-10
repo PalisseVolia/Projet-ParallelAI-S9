@@ -119,7 +119,7 @@ public class GameExporterUtils {
         }
         
         public double[] decompress() {
-            double[] state = new double[66];
+            double[] state = new double[67]; // Changer 66 en 67
             for (int i = 0; i < 64; i++) {
                 int value = (data[i/4] >> ((i % 4) * 2)) & 0x3;
                 state[i] = value == 1 ? 1.0 : value == 2 ? -1.0 : 0.0;

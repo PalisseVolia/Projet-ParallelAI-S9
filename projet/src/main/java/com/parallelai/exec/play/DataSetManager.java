@@ -5,9 +5,13 @@ import com.parallelai.export.implementations.ClassicThreadExporter;
 import com.parallelai.models.utils.Model;
 import com.parallelai.models.utils.ModelRegistry;
 
+import javax.swing.JFileChooser;
+import javax.swing.SwingUtilities;
+import java.io.File;
 import java.util.List;
 import java.util.Scanner;
 
+@SuppressWarnings("unused")
 public class DataSetManager {
     private static final String DATA_FOLDER = "projet\\src\\main\\ressources\\data\\";
     private final Scanner scanner;
@@ -23,7 +27,8 @@ public class DataSetManager {
             System.out.println("1. Create new dataset");
             System.out.println("2. Add data to existing dataset");
             System.out.println("3. See existing datasets");
-            System.out.println("4. Exit");
+            System.out.println("4. Download dataset");
+            System.out.println("5. Exit");
             System.out.println("0. Exit to previous menu");
             
             int choice = scanner.nextInt();
@@ -76,12 +81,20 @@ public class DataSetManager {
         ClassicThreadExporter exporter = new ClassicThreadExporter(fullPath);
         
         System.out.println("\nGenerating dataset...");
-        // Execute the games and generate the dataset
-        exporter.startGamesWithUniqueStatesClassicThreads(numGames, model1, model2, nbThreads);
+        exporter.startGamesWithUniqueStatesClassicThreads(numGames, model1, model2, nbThreads, false);
         
         // Upload to database
         System.out.println("\nUploading dataset to database...");
         FileDatabaseManager.insertFile(fullPath, 3); // 3 represents dataset type
+        
+        // Cleanup local file
+        try {
+            if (new File(fullPath).delete()) {
+                System.out.println("Local file cleaned up successfully.");
+            }
+        } catch (Exception e) {
+            System.err.println("Warning: Could not delete local file: " + e.getMessage());
+        }
         
         System.out.println("\nDataset creation completed!");
     }
@@ -120,12 +133,97 @@ public class DataSetManager {
     private void addToExistingDataset() {
         String selectedDataset = selectExistingDataset();
         if (selectedDataset == null) {
-            return; // User chose to return to previous menu
+            return;
         }
         
         System.out.println("Selected dataset: " + selectedDataset);
-        // TODO: Implémenter la logique d'ajout de données
-        // La suite sera implémentée dans la prochaine étape
+        String localPath = DATA_FOLDER + selectedDataset;
+        
+        try {
+            // Télécharger le dataset existant
+            System.out.println("Downloading existing dataset...");
+            FileDatabaseManager.downloadFile(selectedDataset, 3);
+            
+            // Configuration habituelle
+            System.out.println("\nEnter the number of additional games to play:");
+            int numGames = scanner.nextInt();
+            
+            System.out.println("\nSelect first model (Black):");
+            Model model1 = selectModel();
+            
+            System.out.println("\nSelect second model (White):");
+            Model model2 = selectModel();
+            
+            int nbThreads = Runtime.getRuntime().availableProcessors();
+            ClassicThreadExporter exporter = new ClassicThreadExporter(localPath);
+            
+            // Ajouter les nouvelles données
+            System.out.println("\nAdding new games to dataset...");
+            exporter.startGamesWithUniqueStatesClassicThreads(numGames, model1, model2, nbThreads, true);
+            
+            // Supprimer l'ancienne version puis insérer la nouvelle
+            System.out.println("\nUpdating dataset in database...");
+            FileDatabaseManager.deleteFile(selectedDataset, 3);
+            FileDatabaseManager.insertFile(localPath, 3);
+            
+            // Nettoyage
+            if (new File(localPath).delete()) {
+                System.out.println("Local file cleaned up successfully.");
+            }
+            
+            System.out.println("\nDataset update completed!");
+            
+        } catch (Exception e) {
+            System.err.println("Error during dataset update: " + e.getMessage());
+        } finally {
+            // Nettoyage de sécurité
+            try {
+                new File(localPath).delete();
+            } catch (Exception e) {
+                System.err.println("Warning: Could not delete local file: " + e.getMessage());
+            }
+        }
+    }
+
+    private void downloadDataset() {
+        String selectedDataset = selectExistingDataset();
+        if (selectedDataset == null) {
+            return;
+        }
+
+        System.out.println("Selected dataset: " + selectedDataset);
+
+        try {
+            // Créer et configurer le JFileChooser
+            JFileChooser fileChooser = new JFileChooser();
+            fileChooser.setDialogTitle("Choose where to save the dataset");
+            fileChooser.setSelectedFile(new File(selectedDataset));
+            
+            // Créer une fenêtre parent invisible pour le dialog
+            javax.swing.JFrame frame = new javax.swing.JFrame();
+            frame.setAlwaysOnTop(true);
+            
+            // Afficher le dialog et attendre la sélection
+            int result = fileChooser.showSaveDialog(frame);
+            frame.dispose();
+            
+            if (result == JFileChooser.APPROVE_OPTION) {
+                String savePath = fileChooser.getSelectedFile().getAbsolutePath();
+                
+                // Ajouter l'extension .csv si nécessaire
+                if (!savePath.toLowerCase().endsWith(".csv")) {
+                    savePath += ".csv";
+                }
+                
+                System.out.println("Downloading dataset to: " + savePath);
+                FileDatabaseManager.downloadFile(selectedDataset, savePath, 3);
+                System.out.println("Download completed!");
+            } else {
+                System.out.println("Download cancelled.");
+            }
+        } catch (Exception e) {
+            System.err.println("Error during file selection: " + e.getMessage());
+        }
     }
 
     private Model selectModel() {
