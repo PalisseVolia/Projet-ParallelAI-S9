@@ -8,6 +8,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import com.parallelai.exec.play.GameRunner.AIType;
 import com.parallelai.export.GameStateExporter;
+import com.parallelai.export.implementations.ClassicThreadExporter;
 import com.parallelai.game.*;
 import com.parallelai.players.*;
 import com.parallelai.models.utils.*;
@@ -233,7 +234,7 @@ public class GameManager {
         }
         
         if (save) {
-            GameStateExporter exporter = new GameStateExporter("game_history.csv");
+            GameStateExporter exporter = new ClassicThreadExporter("game_history.csv");
             exporter.exportGame(gameHistory, board);
         }
         announceWinner();

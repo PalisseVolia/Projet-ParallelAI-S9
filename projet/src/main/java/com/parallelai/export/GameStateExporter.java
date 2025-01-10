@@ -12,6 +12,9 @@ import java.util.concurrent.Future;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.Base64;
 import java.util.LinkedHashMap;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
 
 import com.parallelai.exec.play.GameManager;
 import com.parallelai.export.implementations.ClassicThreadExporter;
@@ -39,7 +42,7 @@ import com.parallelai.models.utils.Model;
  * - 1 colonne pour le résultat final (-1=défaite, 0=nul, 1=victoire)
  */
 @SuppressWarnings("unused")
-public class GameStateExporter {
+public abstract class GameStateExporter {
     /** Chemin du fichier CSV de sortie */
     private final String outputPath;
 
@@ -310,7 +313,7 @@ public class GameStateExporter {
     }
 
     private double[] boardToArray(Board board) {
-        double[] state = new double[66]; // 64 cases + somme + occurrences
+        double[] state = new double[67]; // 64 cases + moyenne + somme + occurrences
         Disc[][] grid = board.getGrid();
         
         int index = 0;
@@ -353,23 +356,62 @@ public class GameStateExporter {
         }
     }
 
-    public void exportStateMap(Map<String, double[]> stateMap) {
+    protected void exportStateMap(Map<String, double[]> stateMap) {
         try (FileWriter writer = new FileWriter(outputPath)) {
             for (double[] state : stateMap.values()) {
                 StringBuilder line = new StringBuilder();
                 
-                // État du plateau
-                for (int i = 0; i<64; i++) {
+                // État du plateau (0-63)
+                for (int i = 0; i < 64; i++) {
                     line.append(state[i]).append(",");
                 }
                 
-                // Moyenne des résultats
-                line.append(state[64] / state[65]).append("\n");
+                // Moyenne (64)
+                line.append(state[65] / state[66]).append(",");
+                // Somme totale (65)
+                line.append(state[65]).append(",");
+                // Nombre d'occurrences (66)
+                line.append(state[66]).append("\n");
+                
                 writer.write(line.toString());
             }
         } catch (IOException e) {
             System.err.println("Erreur lors de l'écriture du fichier CSV: " + e.getMessage());
         }
+    }
+
+    protected Map<String, double[]> loadExistingCSV() {
+        Map<String, double[]> existingData = new HashMap<>();
+        File file = new File(outputPath);
+        
+        if (!file.exists()) {
+            return existingData;
+        }
+
+        try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                String[] parts = line.split(",");
+                if (parts.length >= 67) { // 64 cases + moyenne + somme + count
+                    String state = parts[0]; // On utilise la première case comme clé
+                    double[] values = new double[67];
+                    // Copier l'état du plateau (0-63)
+                    for (int i = 0; i < 64; i++) {
+                        values[i] = Double.parseDouble(parts[i]);
+                    }
+                    // La moyenne (64) est recalculée automatiquement
+                    values[64] = 0; // sera calculée à l'export
+                    // Somme totale (65)
+                    values[65] = Double.parseDouble(parts[65]);
+                    // Nombre d'occurrences (66)
+                    values[66] = Double.parseDouble(parts[66]);
+                    existingData.put(state, values);
+                }
+            }
+        } catch (IOException e) {
+            System.err.println("Erreur lors de la lecture du fichier CSV: " + e.getMessage());
+        }
+        return existingData;
     }
 
     public void streamMerge(List<Map<String, double[]>> threadResults, final Map<String, double[]> finalMap) {
@@ -386,8 +428,9 @@ public class GameStateExporter {
                 currentResult.forEach((key, value) -> {
                     double[] existing = finalMap.get(key);
                     if (existing != null) {
-                        existing[64] += value[64];
-                        existing[65] += value[65];
+                        existing[65] += value[65]; // Somme totale
+                        existing[66] += value[66]; // Nombre d'occurrences
+                        // existing[64] sera recalculé à l'export
                     } else {
                         finalMap.put(key, value);
                     }
@@ -627,7 +670,7 @@ public class GameStateExporter {
 
     public static void main(String[] args) {
         String outputPath = "projet\\src\\main\\ressources\\data\\game_history.csv";
-        GameStateExporter baseExporter = new GameStateExporter(outputPath);
+        GameStateExporter baseExporter = new ClassicThreadExporter(outputPath);
         ParallelExporter parallelExporter = new ParallelExporter(outputPath);
         ClassicThreadExporter classicExporter = new ClassicThreadExporter(outputPath);
         OptimizedExporter optimizedExporter = new OptimizedExporter(outputPath);
@@ -696,7 +739,7 @@ public class GameStateExporter {
         
         // Test avec threads classiques
         long startTimeClassic = System.currentTimeMillis();
-        classicExporter.startGamesWithUniqueStatesClassicThreads(nbParties, model1, model2, nbThreads);
+        classicExporter.startGamesWithUniqueStatesClassicThreads(nbParties, model1, model2, nbThreads,false);
         long endTimeClassic = System.currentTimeMillis();
         double executionTimeClassic = (endTimeClassic - startTimeClassic) / 1000.0;
         

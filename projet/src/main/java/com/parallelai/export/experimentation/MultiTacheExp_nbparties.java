@@ -3,9 +3,7 @@ package com.parallelai.export.experimentation;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.File;
-import java.util.Arrays;
 
-import com.parallelai.export.GameStateExporter;
 import com.parallelai.export.implementations.ParallelExporter;
 import com.parallelai.export.implementations.ClassicThreadExporter;
 import com.parallelai.models.RandomModel;
@@ -77,14 +75,13 @@ public class MultiTacheExp_nbparties {
                 try {
                     Thread.sleep(2000);
                 } catch (InterruptedException e) {
-                    // TODO Auto-generated catch block
                     e.printStackTrace();
                 }
 
                 // Test avec ClassicThreadExporter
                 ClassicThreadExporter classicExporter = new ClassicThreadExporter(tempPath);
                 startTime = System.nanoTime();
-                classicExporter.startGamesWithUniqueStatesClassicThreads(nbParties, model1, model2, NB_THREADS);
+                classicExporter.startGamesWithUniqueStatesClassicThreads(nbParties, model1, model2, NB_THREADS,false);
                 classicTimes[test] = (System.nanoTime() - startTime) / 1_000_000;
 
                 System.out.printf("  Test %d/%d: ExecutorService=%d ms, Classic Threads=%d ms\n", 
@@ -93,7 +90,6 @@ public class MultiTacheExp_nbparties {
                 try {
                     Thread.sleep(2000);
                 } catch (InterruptedException e) {
-                    // TODO Auto-generated catch block
                     e.printStackTrace();
                 }
             }

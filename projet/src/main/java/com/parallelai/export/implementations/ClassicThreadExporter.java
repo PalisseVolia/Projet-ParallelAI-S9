@@ -13,7 +13,16 @@ public class ClassicThreadExporter extends GameStateExporter {
         super(outputPath);
     }
 
-    public void startGamesWithUniqueStatesClassicThreads(int nbParties, Model model1, Model model2, int nbThreads) {
+    public void startGamesWithUniqueStatesClassicThreads(int nbParties, Model model1, Model model2, int nbThreads, boolean appendToExisting) {
+        Map<String, double[]> existingData = new HashMap<>();
+        
+        // Charger les données existantes seulement si demandé
+        if (appendToExisting) {
+            System.out.println("Chargement des données existantes...");
+            existingData = loadExistingCSV();
+            System.out.println(existingData.size() + " états déjà existants chargés.");
+        }
+        
         System.out.println("Début des " + nbParties + " parties avec " + nbThreads + " threads (version classique)...\n");
         ProgressBar.initDisplay(nbThreads);
 
@@ -97,6 +106,22 @@ public class ClassicThreadExporter extends GameStateExporter {
         Map<String, double[]> finalMap = new HashMap<>();
         streamMerge(allResults, finalMap);
 
+        if (appendToExisting) {
+            // Fusion intelligente des données existantes avec les nouvelles
+            existingData.forEach((key, existingValue) -> {
+                finalMap.compute(key, (k, newValue) -> {
+                    if (newValue == null) {
+                        return existingValue;
+                    } else {
+                        // Mettre à jour les compteurs et moyennes
+                        newValue[64] += existingValue[64]; // Somme des résultats
+                        newValue[65] += existingValue[65]; // Nombre d'occurrences
+                        return newValue;
+                    }
+                });
+            });
+        }
+
         // Libérer la mémoire
         allResults.clear();
         allResults = null;
@@ -172,13 +197,20 @@ public class ClassicThreadExporter extends GameStateExporter {
         double[] existing = localMap.get(key);
         if (existing == null) {
             double[] newState = state.decompress();
-            newState[64] = finalResult;
-            newState[65] = 1.0;
+            // Vérification de sécurité
+            if (newState.length != 67) {
+                double[] resizedState = new double[67];
+                System.arraycopy(newState, 0, resizedState, 0, Math.min(newState.length, 67));
+                newState = resizedState;
+            }
+            newState[64] = 0; // moyenne (calculée à l'export)
+            newState[65] = finalResult; // somme totale
+            newState[66] = 1.0; // nombre d'occurrences
             localMap.put(key, newState);
         } else {
-            existing[64] += finalResult;
-            existing[65] += 1.0;
+            existing[65] += finalResult; // ajouter à la somme
+            existing[66] += 1.0; // incrémenter le compteur
         }
     }
-    }
+}
 
