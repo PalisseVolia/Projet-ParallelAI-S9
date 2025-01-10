@@ -22,7 +22,6 @@ import com.parallelai.export.utilities.GameExporterUtils.ProgressBar;
 import com.parallelai.export.utilities.GameExporterUtils.StateBuffer;
 import com.parallelai.game.Board;
 import com.parallelai.game.Disc;
-import com.parallelai.models.MinimaxModel;
 import com.parallelai.models.RandomModel;
 import com.parallelai.models.utils.Model;
 

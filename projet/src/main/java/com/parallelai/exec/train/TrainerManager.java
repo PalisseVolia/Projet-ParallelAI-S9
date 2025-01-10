@@ -99,6 +99,10 @@ public class TrainerManager {
         // Save model to database
         int modelTypeCode = modelType.equals("CNN") ? 1 : 2;
         FileDatabaseManager.insertFile(modelPath, modelTypeCode);
+
+        // Delete local file after database insertion
+        File localFile = new File(modelPath);
+        localFile.delete();
     }
     
     public void startTraining() {

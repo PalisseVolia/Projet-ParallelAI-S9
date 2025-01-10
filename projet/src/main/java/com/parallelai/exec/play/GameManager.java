@@ -11,6 +11,9 @@ import com.parallelai.export.GameStateExporter;
 import com.parallelai.game.*;
 import com.parallelai.players.*;
 import com.parallelai.models.utils.*;
+import com.parallelai.database.FileDatabaseManager;
+import com.parallelai.exec.files.FilesUtils;
+import java.io.IOException;
 
 public class GameManager {
     // Game mode enums for cleaner code
@@ -199,6 +202,13 @@ public class GameManager {
         ties = atomicTies.get();
         
         displayGameStatistics(numGames);
+        
+        // Clear model directories after games are completed
+        try {
+            FilesUtils.clearModelDirectories();
+        } catch (IOException e) {
+            System.err.println("Failed to clear model directories: " + e.getMessage());
+        }
     }
 
     private void displayGameStatistics(int numGames) {
@@ -214,10 +224,40 @@ public class GameManager {
     private Model selectAIModel(String prompt) {
         List<ModelRegistry.ModelInfo> models = ModelRegistry.getAvailableModels();
         System.out.println(prompt + ":");
+        
+        // Display available model types
         for (int i = 0; i < models.size(); i++) {
             System.out.println((i + 1) + ". " + models.get(i).name);
         }
-        return ModelRegistry.createModel(scanner.nextInt() - 1);
+        
+        int modelTypeChoice = scanner.nextInt();
+        if (modelTypeChoice < 1 || modelTypeChoice > models.size()) {
+            throw new IllegalArgumentException("Invalid model type choice");
+        }
+
+        // Get model type (CNN or MLP)
+        String modelType = models.get(modelTypeChoice - 1).name;
+        int dbType = modelType.equals("CNN") ? 1 : 2;
+
+        // Display available models from database
+        String[] availableModels = FileDatabaseManager.getFileList(dbType);
+        if (availableModels.length == 0) {
+            throw new RuntimeException("No " + modelType + " models available in the database");
+        }
+
+        System.out.println("\nAvailable " + modelType + " models:");
+        for (int i = 0; i < availableModels.length; i++) {
+            System.out.println((i + 1) + ". " + availableModels[i]);
+        }
+
+        // Get model choice
+        System.out.println("Select a model (1-" + availableModels.length + "):");
+        int modelChoice = scanner.nextInt();
+        if (modelChoice < 1 || modelChoice > availableModels.length) {
+            throw new IllegalArgumentException("Invalid model choice");
+        }
+
+        return ModelRegistry.createModel(modelTypeChoice - 1);
     }
 
     // Core game methods maintained for compatibility
@@ -301,11 +341,6 @@ public class GameManager {
         return isGameOver;
     }
 
-    public static void main(String[] args) {
-        GameManager game = new GameManager();
-        game.initialize();
-    }
-
     private void updateProgressBar() {
         int completed = gamesCompleted.get();
         int percentage = completed * 100 / totalGames;
@@ -317,8 +352,13 @@ public class GameManager {
                 progressBar.append(j < bars ? "=" : " ");
             }
             progressBar.append("] ").append(percentage).append("% (")
-                      .append(completed).append("/").append(totalGames).append(")");
+            .append(completed).append("/").append(totalGames).append(")");
             System.out.print(progressBar);
         }
+    }
+    
+    public static void main(String[] args) {
+        GameManager game = new GameManager();
+        game.initialize();
     }
 }

@@ -4,6 +4,7 @@ import com.parallelai.game.Board;
 import com.parallelai.game.Move;
 import com.parallelai.game.Disc;
 import com.parallelai.models.utils.Model;
+import com.parallelai.models.utils.ModelRegistry;
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork;
 import org.deeplearning4j.util.ModelSerializer;
 import org.nd4j.linalg.api.ndarray.INDArray;
@@ -16,12 +17,12 @@ public class DenseModel implements Model {
     private MultiLayerNetwork network;
     private static final int BOARD_SIZE = 8;
     private static final int INPUT_SIZE = BOARD_SIZE * BOARD_SIZE;
+    private static final String MODEL_PATH = "projet\\src\\main\\ressources\\models\\MLP\\othello_dense_model.zip";
 
     public DenseModel() {
         try {
-            // Load the trained model
-            String modelPath = "projet\\src\\main\\java\\com\\parallelai\\training\\models\\othello_dense_model.zip";
-            File modelFile = new File(modelPath);
+            ModelRegistry.initializeModelFromDatabase("MLP");
+            File modelFile = new File(MODEL_PATH);
             if (!modelFile.exists()) {
                 throw new IOException("Model file not found at: " + modelFile.getAbsolutePath());
             }

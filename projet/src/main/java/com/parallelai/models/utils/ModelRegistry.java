@@ -3,10 +3,11 @@ package com.parallelai.models.utils;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.parallelai.models.MinimaxModel;
 import com.parallelai.models.RandomModel;
 import com.parallelai.models.CnnModel;
 import com.parallelai.models.DenseModel;
+import com.parallelai.database.FileDatabaseManager;
+import java.io.File;
 
 /**
  * Registry for managing and providing access to AI models.
@@ -20,7 +21,6 @@ public class ModelRegistry {
     static {
         // Register all available models here
         registerModel("Random", () -> new RandomModel());
-        registerModel("Minimax", () -> new MinimaxModel());
         registerModel("CNN", () -> new CnnModel());
         registerModel("Dense", () -> new DenseModel());  // Add this line
         // Add more models as they become available
@@ -79,5 +79,24 @@ public class ModelRegistry {
             this.name = name;
             this.supplier = supplier;
         }
+    }
+
+    public static void initializeModelFromDatabase(String modelType) {
+        int dbType = modelType.equals("CNN") ? 1 : 2;
+        String[] availableModels = FileDatabaseManager.getFileList(dbType);
+        
+        if (availableModels.length == 0) {
+            throw new RuntimeException("No " + modelType + " models available in the database");
+        }
+
+        String selectedModel = availableModels[0]; // Default to first model
+        String targetPath = String.format("projet\\src\\main\\ressources\\models\\%s\\othello_%s_model.zip",
+                modelType, modelType.toLowerCase());
+
+        // Ensure the target directory exists
+        new File(targetPath).getParentFile().mkdirs();
+
+        // Download the selected model
+        FileDatabaseManager.downloadFile(selectedModel, dbType);
     }
 }
