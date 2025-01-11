@@ -9,20 +9,18 @@ import com.parallelai.game.Player;
 
 /**
  * Représente un joueur humain dans le jeu d'Othello.
- * Cette classe permet de:
- * - Gérer les entrées utilisateur via console
- * - Valider les coups saisis par le joueur
- * - Demander une nouvelle saisie si le coup est invalide
+ * Cette classe gère l'interaction avec un joueur humain via la console,
+ * notamment la saisie et la validation des coups.
  */
 public class HumanPlayer extends Player {
-    /** Scanner pour lire les entrées utilisateur */
+    /** Scanner utilisé pour lire les entrées utilisateur depuis la console */
     private Scanner scanner;
 
     /**
-     * Crée un nouveau joueur humain.
+     * Crée un nouveau joueur humain avec une couleur spécifique.
      * 
      * @param color La couleur des pions du joueur (NOIR ou BLANC)
-     * @param scanner Le scanner pour lire les entrées console
+     * @param scanner Le scanner pour lire les entrées console, ne doit pas être null
      */
     public HumanPlayer(Disc color, Scanner scanner) {
         super(color);
@@ -32,9 +30,12 @@ public class HumanPlayer extends Player {
     /**
      * Demande au joueur de saisir un coup via la console.
      * Continue à demander jusqu'à obtenir un coup valide.
-     * Format attendu:
-     * - Ligne: nombre entre 0 et 7
-     * - Colonne: nombre entre 0 et 7
+     * 
+     * Format de saisie :
+     * - Ligne : nombre entier entre 0 et 7 inclus
+     * - Colonne : nombre entier entre 0 et 7 inclus
+     * 
+     * Le coup doit être valide selon les règles d'Othello.
      * 
      * @param board État actuel du plateau de jeu
      * @return Le coup valide choisi par le joueur
@@ -44,9 +45,9 @@ public class HumanPlayer extends Player {
         int row, col;
         Move move;
         do {
-            System.out.println("Enter row (0-7): ");
+            System.out.println("Entrez la ligne (0-7) : ");
             row = scanner.nextInt();
-            System.out.println("Enter column (0-7): ");
+            System.out.println("Entrez la colonne (0-7) : ");
             col = scanner.nextInt();
             move = new Move(row, col, color);
         } while (!board.isValidMove(move, color));

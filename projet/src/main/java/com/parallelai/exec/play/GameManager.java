@@ -282,7 +282,7 @@ public class GameManager {
             throw new IllegalArgumentException("Choix de modèle invalide");
         }
 
-        // Get model type (CNN or MLP)
+        
         String modelType = models.get(modelTypeChoice - 1).name;
         int dbType = modelType.equals("CNN") ? 1 : 2;
 

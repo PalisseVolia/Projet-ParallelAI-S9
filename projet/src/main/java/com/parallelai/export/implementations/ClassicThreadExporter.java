@@ -78,6 +78,8 @@ public class ClassicThreadExporter extends GameStateExporter {
             threads[i] = new Thread(() -> {
                 int gamesCompleted = 0;
                 List<GameState> batchBuffer = new ArrayList<>(BATCH_SIZE);
+                @SuppressWarnings("unused")
+                GameStats threadStats = new GameStats();
                 
                 for (int game = 0; game < partiesForThisThread; game++) {
                     Board board = new Board();
@@ -210,8 +212,7 @@ public class ClassicThreadExporter extends GameStateExporter {
 
             threads[i] = new Thread(() -> {
                 int gamesCompleted = 0;
-                List<GameState> batchBuffer = new ArrayList<>(BATCH_SIZE);
-                
+                List<GameState> batchBuffer = new ArrayList<>(BATCH_SIZE);              
                 for (int game = 0; game < partiesForThisThread; game++) {
                     Board board = new Board();
                     GameManager gameManager = new GameManager(board, player1.model, player2.model);
@@ -341,8 +342,7 @@ public class ClassicThreadExporter extends GameStateExporter {
 
             threads[i] = new Thread(() -> {
                 int gamesCompleted = 0;
-                List<GameState> batchBuffer = new ArrayList<>(BATCH_SIZE);
-                
+                List<GameState> batchBuffer = new ArrayList<>(BATCH_SIZE);                
                 for (int game = 0; game < partiesForThisThread; game++) {
                     Board board = new Board();
                     GameManager gameManager = new GameManager(board, player1.model, player2.model);

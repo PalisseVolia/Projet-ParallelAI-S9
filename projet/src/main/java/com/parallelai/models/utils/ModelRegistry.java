@@ -10,50 +10,49 @@ import com.parallelai.database.FileDatabaseManager;
 import java.io.File;
 
 /**
- * Registry for managing and providing access to AI models.
- * This class maintains a list of available AI models and provides methods
- * to register new models and create instances of existing ones.
+ * Registre pour gérer et fournir l'accès aux modèles d'IA.
+ * Cette classe maintient une liste des modèles d'IA disponibles et fournit des méthodes
+ * pour enregistrer de nouveaux modèles et créer des instances des modèles existants.
  */
 public class ModelRegistry {
-    /** List of all registered AI models */
+    /** Liste de tous les modèles d'IA enregistrés */
     private static final List<ModelInfo> availableModels = new ArrayList<>();
 
     static {
-        // Register all available models here
+        // Enregistrement de tous les modèles disponibles
         registerModel("Random", () -> new RandomModel());
         registerModel("CNN", () -> new CnnModel());
-        registerModel("Dense", () -> new DenseModel());  // Add this line
-        // Add more models as they become available
+        registerModel("Dense", () -> new DenseModel());
     }
 
     /**
-     * Registers a new AI model in the registry
-     * @param name The display name of the model
-     * @param supplier A function that creates a new instance of the model
+     * Enregistre un nouveau modèle d'IA dans le registre
+     * @param name Le nom d'affichage du modèle
+     * @param supplier Une fonction qui crée une nouvelle instance du modèle
      */
     public static void registerModel(String name, ModelSupplier supplier) {
         availableModels.add(new ModelInfo(name, supplier));
     }
 
     /**
-     * Returns a list of all available AI models
-     * @return List of ModelInfo objects containing model names and their factories
+     * Retourne la liste de tous les modèles d'IA disponibles
+     * @return Liste des modèles d'IA enregistrés
      */
     public static List<ModelInfo> getAvailableModels() {
         return new ArrayList<>(availableModels);
     }
 
     /**
-     * Creates a new instance of a model at the specified index
-     * @param index The index of the model in the registry
-     * @return A new instance of the requested model
+     * Crée une nouvelle instance d'un modèle à l'index spécifié
+     * @param index L'index du modèle dans le registre
+     * @return Une nouvelle instance du modèle demandé
      */
     public static Model createModel(int index) {
         return availableModels.get(index).supplier.get();
     }
 
     /**
-     * Functional interface for creating new model instances
+     * Interface fonctionnelle pour créer de nouvelles instances de modèles
      */
     @FunctionalInterface
     public interface ModelSupplier {
@@ -61,19 +60,18 @@ public class ModelRegistry {
     }
 
     /**
-     * Container class for model information
-     * Holds the display name and instance factory for a model
+     * Classe contenant les informations des modèles.
      */
     public static class ModelInfo {
-        /** Display name of the model */
+        /** Nom du modèle */
         public final String name;
-        /** Factory function to create new instances of the model */
+        /** Fonction pour créer de nouvelles instances du modèle */
         public final ModelSupplier supplier;
 
         /**
-         * Creates a new ModelInfo
-         * @param name Display name of the model
-         * @param supplier Factory function for creating model instances
+         * Crée un nouveau ModelInfo
+         * @param name Nom d'affichage du modèle
+         * @param supplier Fonction pour créer des instances du modèle
          */
         ModelInfo(String name, ModelSupplier supplier) {
             this.name = name;
@@ -81,22 +79,27 @@ public class ModelRegistry {
         }
     }
 
+    /**
+     * Initialise un modèle depuis la base de données
+     * @param modelType Le type de modèle à initialiser (CNN ou MLP)
+     */
     public static void initializeModelFromDatabase(String modelType) {
         int dbType = modelType.equals("CNN") ? 1 : 2;
         String[] availableModels = FileDatabaseManager.getFileList(dbType);
         
         if (availableModels.length == 0) {
-            throw new RuntimeException("No " + modelType + " models available in the database");
+            throw new RuntimeException("Aucun modèle " + modelType + " disponible dans la base de données");
         }
 
-        String selectedModel = availableModels[0]; // Default to first model
+        // Utilise le premier modèle par défaut
+        String selectedModel = availableModels[0];
         String targetPath = String.format("projet\\src\\main\\ressources\\models\\%s\\othello_%s_model.zip",
                 modelType, modelType.toLowerCase());
 
-        // Ensure the target directory exists
+        // Assure que le répertoire cible existe
         new File(targetPath).getParentFile().mkdirs();
 
-        // Download the selected model
+        // Télécharge le modèle sélectionné
         FileDatabaseManager.downloadFile(selectedModel, dbType);
     }
 }
