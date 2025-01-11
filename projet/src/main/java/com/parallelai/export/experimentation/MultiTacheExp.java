@@ -9,10 +9,19 @@ import com.parallelai.export.implementations.ClassicThreadExporter;
 import com.parallelai.models.RandomModel;
 import com.parallelai.models.utils.Model;
 
+/**
+ * Classe d'expérimentation pour comparer les performances des différentes implémentations
+ * de parallélisation avec un nombre variable de threads.
+ * Cette classe permet de :
+ * - Tester les performances avec différents nombres de threads
+ * - Comparer les implémentations classiques et ExecutorService
+ * - Générer des résultats de benchmark au format CSV
+ */
 public class MultiTacheExp {
-    private static final int NB_PARTIES = 5000;
-    private static final int NB_TESTS = 3; 
-    private static final int WARMUP_ITERATIONS = 3; // Ajout de warmup
+    // Constantes de configuration
+    private static final int NB_PARTIES = 5000;      // Nombre de parties par test
+    private static final int NB_TESTS = 3;           // Nombre de répétitions des tests
+    private static final int WARMUP_ITERATIONS = 3;  // Nombre d'itérations de préchauffage
     private static final String RESULTS_PATH = String.format("projet/src/main/ressources/evaldata_multitache/threading_performance_%dparties.csv", NB_PARTIES);
 
     public static void main(String[] args) {

@@ -11,7 +11,18 @@ import com.parallelai.export.implementations.ParallelExporter;
 import com.parallelai.models.RandomModel;
 import com.parallelai.models.utils.Model;
 
+/**
+ * Classe d'expérimentation pour comparer les différentes approches
+ * de parallélisation et leurs performances respectives.
+ * Compare :
+ * - L'exécution séquentielle
+ * - La parallélisation simple
+ * - L'utilisation de ConcurrentHashMap
+ * - L'approche sans synchronisation
+ * - L'implémentation avec threads classiques
+ */
 public class MultiTacheExp_DiffFonc {
+    // Chemins des fichiers de résultats
     private static final String RESULTS_PATH = "projet\\src\\main\\ressources\\evaldata_multitache\\performance_results.csv";
     private static final String GAME_PATH = "projet\\src\\main\\ressources\\data\\game_history.csv";
     private static final int NB_THREADS = 8;

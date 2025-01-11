@@ -13,7 +13,7 @@ import com.parallelai.models.utils.Model;
  * Joueur IA qui utilise un modèle pour évaluer et sélectionner les meilleurs coups.
  */
 public class AIPlayer extends Player {
-    private final Model model;
+    public final Model model;
 
     /**
      * Crée un nouveau joueur IA avec un modèle d'évaluation spécifique.
