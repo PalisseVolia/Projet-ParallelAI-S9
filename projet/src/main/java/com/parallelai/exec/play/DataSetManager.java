@@ -20,7 +20,7 @@ import java.util.Scanner;
 @SuppressWarnings("unused")
 /**
  * Gestionnaire de jeux de données pour l'apprentissage des modèles.
- * Permet de jouer des parties et optionnellement les sauvegarder dans des datasets.
+ * Permet de jouer des parties et optionnellement les sauvegarder dans des jeux de données.
  */
 public class DataSetManager {
     // Dossier où sont stockés temporairement les fichiers de données
@@ -57,11 +57,11 @@ public class DataSetManager {
      * méthode d'initialisation qui demande d'abord si on veut sauvegarder
      */
     public void initialize() {
-        System.out.println("\n=== Game Manager ===");
-        System.out.println("Do you want to save the games? (y/n)");
+        System.out.println("\n=== Gestionnaire de Parties ===");
+        System.out.println("Voulez-vous sauvegarder les parties ? (o/n)");
         String choice = scanner.nextLine().toLowerCase();
 
-        if (choice.equals("y")) {
+        if (choice.equals("o")) {
             initializeDatasetOptions();
         } else {
             playGamesWithoutSaving();
@@ -72,7 +72,7 @@ public class DataSetManager {
      * Joue les parties sans sauvegarde
      */
     private void playGamesWithoutSaving() {
-        System.out.println("\nPlaying " + nbParties + " games...");
+        System.out.println("\nJeu de " + nbParties + " parties en cours...");
         // Utiliser les Players directement sans sauvegarder
         ClassicThreadExporter exporter = new ClassicThreadExporter(null);
         int nbThreads = Runtime.getRuntime().availableProcessors();
@@ -85,17 +85,17 @@ public class DataSetManager {
             AIWeightedPlayer p2 = new AIWeightedPlayer(Disc.WHITE, model2);
             exporter.startGamesNoSave(nbParties, p1, p2, nbThreads);
         }
-        System.out.println("Games completed!");
+        System.out.println("Parties terminées !");
     }
 
     /**
      * Initialize les options de dataset quand on veut sauvegarder
      */
     private void initializeDatasetOptions() {
-        System.out.println("\n=== Dataset Options ===");
-        System.out.println("1. Create new dataset");
-        System.out.println("2. Add to existing dataset");
-        System.out.println("0. Cancel");
+        System.out.println("\n=== Options du Jeu de Données ===");
+        System.out.println("1. Créer un nouveau jeu de données");
+        System.out.println("2. Ajouter à un jeu de données existant");
+        System.out.println("0. Annuler");
         
         int choice = scanner.nextInt();
         scanner.nextLine(); // Consume newline
@@ -108,7 +108,7 @@ public class DataSetManager {
                 addToExistingDataset();
                 break;
             default:
-                System.out.println("Operation cancelled.");
+                System.out.println("Opération annulée.");
                 break;
         }
     }
@@ -117,14 +117,14 @@ public class DataSetManager {
      * Version modifiée de createNewDataset qui utilise les Players fournis
      */
     private void createNewDataset() {
-        System.out.println("\nEnter the name for your dataset (without .csv extension):");
+        System.out.println("\nEntrez le nom de votre jeu de données (sans l'extension .csv) :");
         String datasetName = scanner.nextLine();
         String fullPath = DATA_FOLDER + datasetName + ".csv";
         
         int nbThreads = Runtime.getRuntime().availableProcessors();
         ClassicThreadExporter exporter = new ClassicThreadExporter(fullPath);
         
-        System.out.println("\nGenerating dataset...");
+        System.out.println("\nGénération du jeu de données...");
         if (aiType == AIType.REGULAR) {
             AIPlayer p1 = new AIPlayer(Disc.BLACK, model1);
             AIPlayer p2 = new AIPlayer(Disc.WHITE, model2);
@@ -134,19 +134,19 @@ public class DataSetManager {
             AIWeightedPlayer p2 = new AIWeightedPlayer(Disc.WHITE, model2);
             exporter.startGamesWithUniqueStatesClassicThreads(nbParties, p1, p2, nbThreads, false);
         }        
-        System.out.println("\nUploading dataset to database...");
+        System.out.println("\nChargement du jeu de données dans la base...");
         FileDatabaseManager.insertFile(fullPath, 3);
         
         // Cleanup
         try {
             if (new File(fullPath).delete()) {
-                System.out.println("Local file cleaned up successfully.");
+                System.out.println("Fichier local nettoyé avec succès.");
             }
         } catch (Exception e) {
-            System.err.println("Warning: Could not delete local file: " + e.getMessage());
+            System.err.println("Attention : Impossible de supprimer le fichier local : " + e.getMessage());
         }
         
-        System.out.println("\nDataset creation completed!");
+        System.out.println("\nCréation du jeu de données terminée !");
     }
 
     /**
@@ -161,13 +161,13 @@ public class DataSetManager {
         String localPath = DATA_FOLDER + selectedDataset;
         
         try {
-            System.out.println("Downloading existing dataset...");
+            System.out.println("Téléchargement du jeu de données existant...");
             FileDatabaseManager.downloadFile(selectedDataset, 3);
             
             int nbThreads = Runtime.getRuntime().availableProcessors();
             ClassicThreadExporter exporter = new ClassicThreadExporter(localPath);
             
-            System.out.println("\nAdding new games to dataset...");
+            System.out.println("\nAjout de nouvelles parties au jeu de données...");
             
             if (aiType == AIType.REGULAR) {
                 AIPlayer p1 = new AIPlayer(Disc.BLACK, model1);
@@ -179,23 +179,23 @@ public class DataSetManager {
                 exporter.startGamesWithUniqueStatesClassicThreads(nbParties, p1, p2, nbThreads, false);
             }
 
-            System.out.println("\nUpdating dataset in database...");
+            System.out.println("\nMise à jour du jeu de données dans la base...");
             FileDatabaseManager.deleteFile(selectedDataset, 3);
             FileDatabaseManager.insertFile(localPath, 3);
             
             if (new File(localPath).delete()) {
-                System.out.println("Local file cleaned up successfully.");
+                System.out.println("Fichier local nettoyé avec succès.");
             }
             
-            System.out.println("\nDataset update completed!");
+            System.out.println("\nMise à jour du jeu de données terminée !");
             
         } catch (Exception e) {
-            System.err.println("Error during dataset update: " + e.getMessage());
+            System.err.println("Erreur lors de la mise à jour du jeu de données : " + e.getMessage());
         } finally {
             try {
                 new File(localPath).delete();
             } catch (Exception e) {
-                System.err.println("Warning: Could not delete local file: " + e.getMessage());
+                System.err.println("Attention : Impossible de supprimer le fichier local : " + e.getMessage());
             }
         }
     }
@@ -206,11 +206,11 @@ public class DataSetManager {
      */
     private String selectExistingDataset() {
         while (true) {
-            System.out.println("\nSelect a dataset:");
+            System.out.println("\nSélectionnez un jeu de données :");
             String[] datasets = FileDatabaseManager.getFileList(3);
             
             if (datasets.length == 0) {
-                System.out.println("No datasets available.");
+                System.out.println("Aucun jeu de données disponible.");
                 return null;
             }
             
@@ -218,7 +218,7 @@ public class DataSetManager {
             for (int i = 0; i < datasets.length; i++) {
                 System.out.println((i + 1) + ". " + datasets[i]);
             }
-            System.out.println("0. Return to previous menu");
+            System.out.println("0. Retour au menu précédent");
             
             int choice = scanner.nextInt();
             scanner.nextLine(); // Consume newline
@@ -231,7 +231,7 @@ public class DataSetManager {
                 return datasets[choice - 1];
             }
             
-            System.out.println("Invalid selection. Please try again.");
+            System.out.println("Sélection invalide. Veuillez réessayer.");
         }
     }
 
@@ -245,12 +245,12 @@ public class DataSetManager {
             return;
         }
 
-        System.out.println("Selected dataset: " + selectedDataset);
+        System.out.println("Jeu de données sélectionné : " + selectedDataset);
 
         try {
             // Créer et configurer le JFileChooser
             JFileChooser fileChooser = new JFileChooser();
-            fileChooser.setDialogTitle("Choose where to save the dataset");
+            fileChooser.setDialogTitle("Choisissez où sauvegarder le jeu de données");
             fileChooser.setSelectedFile(new File(selectedDataset));
             
             // Créer une fenêtre parent invisible pour le dialog
@@ -269,14 +269,14 @@ public class DataSetManager {
                     savePath += ".csv";
                 }
                 
-                System.out.println("Downloading dataset to: " + savePath);
+                System.out.println("Téléchargement du jeu de données vers : " + savePath);
                 FileDatabaseManager.downloadFile(selectedDataset, savePath, 3);
-                System.out.println("Download completed!");
+                System.out.println("Téléchargement terminé !");
             } else {
-                System.out.println("Download cancelled.");
+                System.out.println("Téléchargement annulé.");
             }
         } catch (Exception e) {
-            System.err.println("Error during file selection: " + e.getMessage());
+            System.err.println("Erreur lors de la sélection du fichier : " + e.getMessage());
         }
     }
 
@@ -291,27 +291,5 @@ public class DataSetManager {
         }
         int modelChoice = scanner.nextInt();
         return ModelRegistry.createModel(modelChoice - 1);
-    }
-
-    /**
-     * Méthode main modifiée pour utiliser AIType
-     */
-    public static void main(String[] args) {
-        Model model1 = new RandomModel();
-        Model model2 = new RandomModel();
-        int nbParties = 1000;
-        
-        System.out.println("Choose AI type:");
-        System.out.println("1. Regular AI");
-        System.out.println("2. Weighted AI");
-        
-        Scanner scanner = new Scanner(System.in);
-        int choice = scanner.nextInt();
-        AIType aiType = (choice == 2) ? AIType.WEIGHTED : AIType.REGULAR;
-        
-        DataSetManager manager = new DataSetManager(model1, model2, nbParties, aiType);
-        manager.initialize();
-        
-        scanner.close();
     }
 }

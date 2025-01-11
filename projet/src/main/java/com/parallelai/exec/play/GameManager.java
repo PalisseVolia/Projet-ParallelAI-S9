@@ -25,7 +25,7 @@ import java.io.IOException;
  * - Le suivi des statistiques de jeu
  */
 public class GameManager {
-    // Game mode enums for cleaner code
+    // Énumération des modes de jeu pour un code plus propre
     private enum GameMode { 
         HUMAN_VS_HUMAN,    // Mode joueur contre joueur
         HUMAN_VS_AI,       // Mode joueur contre IA
@@ -40,14 +40,14 @@ public class GameManager {
     private final List<Board> gameHistory;
     private boolean isGameOver;
 
-    // Game statistics
+    // Statistiques de jeu
     private String model1Name;
     private String model2Name;
     private int model1Wins;
     private int model2Wins;
     private int ties;
 
-    // Add these fields for thread-safe statistics
+    // Champs pour les statistiques thread-safe
     private final AtomicInteger atomicModel1Wins = new AtomicInteger(0);
     private final AtomicInteger atomicModel2Wins = new AtomicInteger(0);
     private final AtomicInteger atomicTies = new AtomicInteger(0);
@@ -102,15 +102,14 @@ public class GameManager {
         GameMode gameMode = promptGameMode();
         setupPlayers(gameMode);
         
-        if (gameMode == GameMode.AI_VS_AI) {
-            handleAIGame();
-        } else {
+        if (gameMode != GameMode.AI_VS_AI) {
             startGame();
-        }
+        } 
     }
 
     /**
      * Affiche le menu de sélection du mode de jeu
+     * @return Le mode de jeu sélectionné
      */
     private GameMode promptGameMode() {
         System.out.println("Choisissez un mode de jeu :");
@@ -128,7 +127,8 @@ public class GameManager {
     }
 
     /**
-     * Sets up players based on the selected game mode
+     * Configure les joueurs selon le mode de jeu sélectionné
+     * @param gameMode Le mode de jeu choisi
      */
     private void setupPlayers(GameMode gameMode) {
         switch (gameMode) {
@@ -150,7 +150,7 @@ public class GameManager {
     }
 
     /**
-     * Handles AI vs AI game setup and execution
+     * Gère la configuration et l'exécution des parties IA contre IA
      */
     private void handleAIGame() {
         AIType aiType = promptAIType();
@@ -176,7 +176,8 @@ public class GameManager {
     }
 
     /**
-     * Prompts for AI type selection
+     * Demande à l'utilisateur de choisir le type d'IA
+     * @return Le type d'IA sélectionné
      */
     private AIType promptAIType() {
         System.out.println("Choisissez le type d'IA :");
@@ -187,7 +188,11 @@ public class GameManager {
     }
 
     /**
-     * Runs multiple games and displays statistics
+     * Exécute plusieurs parties et affiche les statistiques
+     * @param numGames Nombre de parties à jouer
+     * @param model1 Premier modèle d'IA
+     * @param model2 Deuxième modèle d'IA
+     * @param aiType Type d'IA à utiliser
      */
     @SuppressWarnings("unused")
     private void runMultipleGames(int numGames, Model model1, Model model2, AIType aiType) {
@@ -198,9 +203,9 @@ public class GameManager {
         ExecutorService executor = Executors.newFixedThreadPool(processors);
         List<Future<GameResult>> futures = new ArrayList<>();
         
-        System.out.println("Progress: ");
+        System.out.println("Progression : ");
         
-        // Submit all games to the executor
+        // Soumettre toutes les parties à l'exécuteur
         for (int i = 0; i < numGames; i++) {
             GameRunner runner = new GameRunner(model1, model2, aiType, () -> {
                 gamesCompleted.incrementAndGet();
@@ -209,7 +214,7 @@ public class GameManager {
             futures.add(executor.submit(runner));
         }
         
-        // Collect results
+        // Collecter les résultats
         for (Future<GameResult> future : futures) {
             try {
                 GameResult result = future.get();
@@ -230,16 +235,16 @@ public class GameManager {
             e.printStackTrace();
         }
         
-        System.out.println(); // New line after progress bar
+        System.out.println(); // Nouvelle ligne après la barre de progression
         
-        // Update the original statistics variables for compatibility
+        // Mise à jour des variables de statistiques originales pour la compatibilité
         model1Wins = atomicModel1Wins.get();
         model2Wins = atomicModel2Wins.get();
         ties = atomicTies.get();
         
         displayGameStatistics(numGames);
         
-        // Clear model directories after games are completed
+        // Nettoyer les répertoires des modèles après la fin des parties
         try {
             FilesUtils.clearModelDirectories();
         } catch (IOException e) {
@@ -248,7 +253,8 @@ public class GameManager {
     }
 
     /**
-     * Affiche les statistiques finales de la partie
+     * Affiche les statistiques finales des parties
+     * @param numGames Nombre total de parties jouées
      */
     private void displayGameStatistics(int numGames) {
         System.out.println("Résultats après " + numGames + " parties :");
@@ -259,6 +265,8 @@ public class GameManager {
 
     /**
      * Permet à l'utilisateur de sélectionner un modèle d'IA
+     * @param prompt Message à afficher pour la sélection
+     * @return Le modèle d'IA sélectionné
      */
     private Model selectAIModel(String prompt) {
         List<ModelRegistry.ModelInfo> models = ModelRegistry.getAvailableModels();
@@ -299,7 +307,10 @@ public class GameManager {
         return ModelRegistry.createModel(modelTypeChoice - 1);
     }
 
-    // Core game methods maintained for compatibility
+    /**
+     * Démarre une partie avec option de sauvegarde
+     * @param save True pour sauvegarder la partie, False sinon
+     */
     public void startGame(boolean save) {
         while (!isGameOver) {
             board.display();
@@ -318,10 +329,17 @@ public class GameManager {
         announceWinner();
     }
 
+    /**
+     * Démarre une partie sans sauvegarde
+     */
     public void startGame() {
         startGame(false);
     }
 
+    /**
+     * Traite le prochain coup de la partie
+     * @return False si la partie est terminée, True sinon
+     */
     private boolean processNextMove() {
         if (!board.hasValidMoves(currentPlayer.getColor())) {
             if (player1 instanceof HumanPlayer || player2 instanceof HumanPlayer) {
@@ -343,6 +361,10 @@ public class GameManager {
         return true;
     }
 
+    /**
+     * Joue le prochain coup de la partie
+     * @return False si la partie est terminée, True sinon
+     */
     public boolean playNextMove() {
         if (isGameOver) return false;
         
@@ -354,6 +376,9 @@ public class GameManager {
         return true;
     }
 
+    /**
+     * Annonce le gagnant de la partie
+     */
     private void announceWinner() {
         board.display();
         int blackCount = board.getDiscCount(Disc.BLACK);
@@ -372,14 +397,25 @@ public class GameManager {
         }
     }
 
+    /**
+     * Récupère le plateau de jeu actuel
+     * @return Le plateau de jeu
+     */
     public Board getBoard() {
         return board;
     }
 
+    /**
+     * Vérifie si la partie est terminée
+     * @return True si la partie est terminée, False sinon
+     */
     public boolean isGameOver() {
         return isGameOver;
     }
 
+    /**
+     * Met à jour la barre de progression
+     */
     private void updateProgressBar() {
         int completed = gamesCompleted.get();
         int percentage = completed * 100 / totalGames;

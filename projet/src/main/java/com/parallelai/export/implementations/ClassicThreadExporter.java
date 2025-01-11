@@ -78,7 +78,6 @@ public class ClassicThreadExporter extends GameStateExporter {
             threads[i] = new Thread(() -> {
                 int gamesCompleted = 0;
                 List<GameState> batchBuffer = new ArrayList<>(BATCH_SIZE);
-                GameStats threadStats = new GameStats();
                 
                 for (int game = 0; game < partiesForThisThread; game++) {
                     Board board = new Board();
@@ -212,7 +211,6 @@ public class ClassicThreadExporter extends GameStateExporter {
             threads[i] = new Thread(() -> {
                 int gamesCompleted = 0;
                 List<GameState> batchBuffer = new ArrayList<>(BATCH_SIZE);
-                GameStats threadStats = new GameStats();
                 
                 for (int game = 0; game < partiesForThisThread; game++) {
                     Board board = new Board();
@@ -344,7 +342,6 @@ public class ClassicThreadExporter extends GameStateExporter {
             threads[i] = new Thread(() -> {
                 int gamesCompleted = 0;
                 List<GameState> batchBuffer = new ArrayList<>(BATCH_SIZE);
-                GameStats threadStats = new GameStats();
                 
                 for (int game = 0; game < partiesForThisThread; game++) {
                     Board board = new Board();
@@ -456,7 +453,6 @@ public class ClassicThreadExporter extends GameStateExporter {
 
             threads[i] = new Thread(() -> {
                 int gamesCompleted = 0;
-                GameStats threadStats = new GameStats();
                 
                 for (int game = 0; game < partiesForThisThread; game++) {
                     Board board = new Board();
@@ -524,7 +520,6 @@ public class ClassicThreadExporter extends GameStateExporter {
 
             threads[i] = new Thread(() -> {
                 int gamesCompleted = 0;
-                GameStats threadStats = new GameStats();
                 
                 for (int game = 0; game < partiesForThisThread; game++) {
                     Board board = new Board();
@@ -591,7 +586,6 @@ public class ClassicThreadExporter extends GameStateExporter {
 
             threads[i] = new Thread(() -> {
                 int gamesCompleted = 0;
-                GameStats threadStats = new GameStats();
                 
                 for (int game = 0; game < partiesForThisThread; game++) {
                     Board board = new Board();
