@@ -10,29 +10,44 @@ import com.parallelai.game.Player;
 import com.parallelai.models.utils.Model;
 
 /**
- * Unified AI player that uses a model to evaluate and select moves.
+ * Joueur IA qui utilise un modèle pour évaluer et sélectionner les coups.
  */
 public class AIWeightedPlayer extends Player {
     private final Model model;
+    // La température contrôle la distribution des poids exponentiels
+    // Les valeurs plus élevées rendent la probabilité de sélectionner un meilleur coup plsu élevée
+    private final double temperature = 5.0;
 
+    /**
+     * Crée un nouveau joueur IA avec un modèle d'évaluation spécifique.
+     *
+     * @param color La couleur des pions du joueur (NOIR ou BLANC)
+     * @param model Le modèle utilisé pour évaluer les coups
+     */
     public AIWeightedPlayer(Disc color, Model model) {
         super(color);
         this.model = model;
     }
 
+    /**
+     * Détermine et retourne le prochain coup à jouer en utilisant le modèle d'évaluation.
+     * Le coup est choisi de manière pondérée en fonction des évaluations du modèle.
+     *
+     * @param board L'état actuel du plateau de jeu
+     * @return Le coup choisi, ou null si aucun coup n'est possible
+     */
     @Override
     public Move getMove(Board board) {
         List<Move> validMoves = new ArrayList<>();
         List<Double> evaluations = new ArrayList<>();
         
-        // Find valid moves and get their evaluations from the model
+        // Collecte des coups et leurs évaluations
         for (int i = 0; i < 8; i++) {
             for (int j = 0; j < 8; j++) {
                 Move move = new Move(i, j, color);
                 if (board.isValidMove(move, color)) {
                     validMoves.add(move);
                     double eval = model.evaluateMove(move, board);
-                    // Invert evaluation for white player
                     if (color == Disc.WHITE) {
                         eval = 1.0 - eval;
                     }
@@ -45,24 +60,25 @@ public class AIWeightedPlayer extends Player {
             return null;
         }
 
-        // Calculate total weight (sum of all evaluations)
-        double totalWeight = evaluations.stream()
-            .mapToDouble(Double::doubleValue)
-            .sum();
+        // Application de la pondération exponentielle
+        List<Double> weights = new ArrayList<>();
+        double totalWeight = 0.0;
+        for (Double eval : evaluations) {
+            double weight = Math.exp(eval * temperature);
+            weights.add(weight);
+            totalWeight += weight;
+        }
 
-        // Generate random value between 0 and total weight
+        // Sélection aléatoire pondérée
         double random = Math.random() * totalWeight;
-
-        // Use weighted random selection
         double weightSum = 0;
-        for (int i = 0; i < evaluations.size(); i++) {
-            weightSum += evaluations.get(i);
+        for (int i = 0; i < weights.size(); i++) {
+            weightSum += weights.get(i);
             if (random <= weightSum) {
                 return validMoves.get(i);
             }
         }
 
-        // Fallback to last move (should rarely happen due to floating point precision)
         return validMoves.get(validMoves.size() - 1);
     }
 }

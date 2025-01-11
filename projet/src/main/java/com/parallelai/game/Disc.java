@@ -2,7 +2,7 @@ package com.parallelai.game;
 
 /**
  * Représente les différents états possibles d'une case du plateau Othello.
- * Cette énumération définit:
+ * Cette énumération définit :
  * - Les trois états possibles d'une case (vide, noir, blanc)
  * - Le symbole d'affichage associé à chaque état
  * - La méthode pour obtenir la couleur opposée

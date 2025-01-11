@@ -4,23 +4,23 @@ import com.parallelai.game.Board;
 import com.parallelai.game.Move;
 
 /**
- * Interface for game state evaluation models.
- * Each model implements its own strategy for evaluating positions.
+ * Interface pour les modèles d'évaluation des états de jeu.
+ * Chaque modèle implémente sa propre stratégie d'évaluation des positions.
  */
 public interface Model {
     /**
-     * Evaluates a potential move and returns a score between 0 and 1.
-     * Higher scores indicate better moves according to the model's strategy.
+     * Évalue un coup potentiel et retourne un score entre 0 et 1.
+     * Les scores plus élevés indiquent de meilleurs coups selon la stratégie du modèle.
      * 
-     * @param move The move to evaluate
-     * @param board Current state of the board
-     * @return Evaluation score between 0 (worst) and 1 (best)
+     * @param move Le coup à évaluer
+     * @param board État actuel du plateau
+     * @return Score d'évaluation entre 0 (pire) et 1 (meilleur)
      */
     double evaluateMove(Move move, Board board);
     
     /**
-     * Returns the name of the model implementation.
-     * @return String representing the model name
+     * Retourne le nom de l'implémentation du modèle.
+     * @return Chaîne représentant le nom du modèle
      */
     default String getName() {
         return this.getClass().getSimpleName().replace("Model", "");

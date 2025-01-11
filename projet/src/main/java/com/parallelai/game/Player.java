@@ -2,7 +2,7 @@ package com.parallelai.game;
 
 /**
  * Classe abstraite représentant un joueur d'Othello.
- * Cette classe définit:
+ * Cette classe définit :
  * - L'interface commune à tous les types de joueurs (humain ou IA)
  * - La gestion de la couleur des pions du joueur
  * - La méthode abstraite pour obtenir le prochain coup
