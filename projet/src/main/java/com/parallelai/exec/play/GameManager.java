@@ -16,9 +16,21 @@ import com.parallelai.database.FileDatabaseManager;
 import com.parallelai.exec.files.FilesUtils;
 import java.io.IOException;
 
+/**
+ * Gestionnaire de partie d'Othello.
+ * Cette classe gère :
+ * - L'initialisation et le déroulement des parties
+ * - Les différents modes de jeu (Humain vs Humain, Humain vs IA, IA vs IA)
+ * - La création et la gestion des joueurs
+ * - Le suivi des statistiques de jeu
+ */
 public class GameManager {
     // Game mode enums for cleaner code
-    private enum GameMode { HUMAN_VS_HUMAN, HUMAN_VS_AI, AI_VS_AI }
+    private enum GameMode { 
+        HUMAN_VS_HUMAN,    // Mode joueur contre joueur
+        HUMAN_VS_AI,       // Mode joueur contre IA
+        AI_VS_AI          // Mode IA contre IA
+    }
 
     private final Scanner scanner;
     private final Board board;
@@ -42,6 +54,9 @@ public class GameManager {
     private final AtomicInteger gamesCompleted = new AtomicInteger(0);
     private int totalGames;
 
+    /**
+     * Initialise une nouvelle partie avec les paramètres par défaut
+     */
     public GameManager() {
         this.scanner = new Scanner(System.in);
         this.board = new Board();
@@ -49,6 +64,12 @@ public class GameManager {
         this.isGameOver = false;
     }
 
+    /**
+     * Initialise une partie avec un plateau et des modèles d'IA spécifiques
+     * @param board Le plateau de jeu initial
+     * @param model1 Modèle d'IA pour le joueur noir
+     * @param model2 Modèle d'IA pour le joueur blanc
+     */
     public GameManager(Board board, Model model1, Model model2) {
         this.scanner = new Scanner(System.in);
         this.board = board;
@@ -60,7 +81,22 @@ public class GameManager {
     }
 
     /**
-     * Initializes and starts the game based on user input
+     * Initialise une partie avec des joueurs IA pondérés
+     * @param board Le plateau de jeu initial
+     * @param p1 Joueur IA pondéré noir
+     * @param p2 Joueur IA pondéré blanc
+     */
+    public GameManager(Board board, AIWeightedPlayer p1, AIWeightedPlayer p2) {
+        this.scanner = new Scanner(System.in);
+        this.board = board;
+        this.player1 = p1;
+        this.player2 = p2;
+        this.currentPlayer = player1;
+        this.gameHistory = new ArrayList<>();
+        this.isGameOver = false;
+    }
+    /**
+     * Initialise et démarre la partie selon le mode choisi
      */
     public void initialize() {
         GameMode gameMode = promptGameMode();
@@ -74,20 +110,20 @@ public class GameManager {
     }
 
     /**
-     * Prompts for game mode selection
+     * Affiche le menu de sélection du mode de jeu
      */
     private GameMode promptGameMode() {
-        System.out.println("Choose game mode:");
-        System.out.println("1. Human vs Human");
-        System.out.println("2. Human vs AI");
-        System.out.println("3. AI vs AI");
+        System.out.println("Choisissez un mode de jeu :");
+        System.out.println("1. Humain contre Humain");
+        System.out.println("2. Humain contre IA");
+        System.out.println("3. IA contre IA");
         
         int choice = scanner.nextInt();
         return switch (choice) {
             case 1 -> GameMode.HUMAN_VS_HUMAN;
             case 2 -> GameMode.HUMAN_VS_AI;
             case 3 -> GameMode.AI_VS_AI;
-            default -> throw new IllegalArgumentException("Invalid game mode");
+            default -> throw new IllegalArgumentException("Mode de jeu invalide");
         };
     }
 
@@ -102,11 +138,12 @@ public class GameManager {
                 break;
             case HUMAN_VS_AI:
                 player1 = new HumanPlayer(Disc.BLACK, scanner);
-                Model aiModel = selectAIModel("Select AI model for White");
+                Model aiModel = selectAIModel("Sélectionnez le modèle d'IA pour le joueur blanc");
                 player2 = new AIPlayer(Disc.WHITE, aiModel);
                 break;
             case AI_VS_AI:
                 // Players will be set up in handleAIGame()
+                handleAIGame();
                 break;
         }
         currentPlayer = player1;
@@ -117,12 +154,12 @@ public class GameManager {
      */
     private void handleAIGame() {
         AIType aiType = promptAIType();
-        System.out.println("Enter number of games (1 for single game):");
+        System.out.println("Entrez le nombre de parties (1 pour une seule partie) :");
         int numGames = scanner.nextInt();
         totalGames = numGames;
 
-        Model model1 = selectAIModel("Select AI model for Black");
-        Model model2 = selectAIModel("Select AI model for White");
+        Model model1 = selectAIModel("Sélectionnez le modèle d'IA pour le joueur noir");
+        Model model2 = selectAIModel("Sélectionnez le modèle d'IA pour le joueur blanc");
         
         // Create players with the selected models and AI type
         if (aiType == AIType.REGULAR) {
@@ -133,21 +170,18 @@ public class GameManager {
             player2 = new AIWeightedPlayer(Disc.WHITE, model2);
         }
         currentPlayer = player1;
-        
-        if (numGames == 1) {
-            startGame();
-        } else {
-            runMultipleGames(numGames, model1, model2, aiType);
-        }
+
+        DataSetManager manager = new DataSetManager(model1, model2, totalGames, aiType);
+        manager.initialize();
     }
 
     /**
      * Prompts for AI type selection
      */
     private AIType promptAIType() {
-        System.out.println("Choose AI type:");
-        System.out.println("1. Regular AI   - Best moves");
-        System.out.println("2. Weighted AI  - Weighted random selection");
+        System.out.println("Choisissez le type d'IA :");
+        System.out.println("1. IA régulière - Meilleurs coups");
+        System.out.println("2. IA pondérée - Sélection aléatoire pondérée");
         
         return scanner.nextInt() == 1 ? AIType.REGULAR : AIType.WEIGHTED;
     }
@@ -155,6 +189,7 @@ public class GameManager {
     /**
      * Runs multiple games and displays statistics
      */
+    @SuppressWarnings("unused")
     private void runMultipleGames(int numGames, Model model1, Model model2, AIType aiType) {
         model1Name = model1.getName();
         model2Name = model2.getName();
@@ -212,50 +247,53 @@ public class GameManager {
         }
     }
 
+    /**
+     * Affiche les statistiques finales de la partie
+     */
     private void displayGameStatistics(int numGames) {
-        System.out.println("Results after " + numGames + " games:");
-        System.out.println(model1Name + " wins: " + model1Wins);
-        System.out.println(model2Name + " wins: " + model2Wins);
-        System.out.println("Ties: " + ties);
+        System.out.println("Résultats après " + numGames + " parties :");
+        System.out.println(model1Name + " victoires : " + model1Wins);
+        System.out.println(model2Name + " victoires : " + model2Wins);
+        System.out.println("Matchs nuls : " + ties);
     }
 
     /**
-     * Allows user to select an AI model
+     * Permet à l'utilisateur de sélectionner un modèle d'IA
      */
     private Model selectAIModel(String prompt) {
         List<ModelRegistry.ModelInfo> models = ModelRegistry.getAvailableModels();
-        System.out.println(prompt + ":");
+        System.out.println(prompt + " :");
         
-        // Display available model types
+        // Afficher les types de modèles disponibles
         for (int i = 0; i < models.size(); i++) {
             System.out.println((i + 1) + ". " + models.get(i).name);
         }
         
         int modelTypeChoice = scanner.nextInt();
         if (modelTypeChoice < 1 || modelTypeChoice > models.size()) {
-            throw new IllegalArgumentException("Invalid model type choice");
+            throw new IllegalArgumentException("Choix de modèle invalide");
         }
 
         // Get model type (CNN or MLP)
         String modelType = models.get(modelTypeChoice - 1).name;
         int dbType = modelType.equals("CNN") ? 1 : 2;
 
-        // Display available models from database
+        // Afficher les modèles disponibles
         String[] availableModels = FileDatabaseManager.getFileList(dbType);
         if (availableModels.length == 0) {
-            throw new RuntimeException("No " + modelType + " models available in the database");
+            throw new RuntimeException("Aucun modèle " + modelType + " disponible dans la base de données");
         }
 
-        System.out.println("\nAvailable " + modelType + " models:");
+        System.out.println("\nModèles " + modelType + " disponibles :");
         for (int i = 0; i < availableModels.length; i++) {
             System.out.println((i + 1) + ". " + availableModels[i]);
         }
 
         // Get model choice
-        System.out.println("Select a model (1-" + availableModels.length + "):");
+        System.out.println("Sélectionnez un modèle (1-" + availableModels.length + ") :");
         int modelChoice = scanner.nextInt();
         if (modelChoice < 1 || modelChoice > availableModels.length) {
-            throw new IllegalArgumentException("Invalid model choice");
+            throw new IllegalArgumentException("Choix de modèle invalide");
         }
 
         return ModelRegistry.createModel(modelTypeChoice - 1);
@@ -287,7 +325,7 @@ public class GameManager {
     private boolean processNextMove() {
         if (!board.hasValidMoves(currentPlayer.getColor())) {
             if (player1 instanceof HumanPlayer || player2 instanceof HumanPlayer) {
-                System.out.println("No valid moves for " + currentPlayer.getColor());
+                System.out.println("Aucun coup valide pour " + currentPlayer.getColor());
             }
             if (!board.hasValidMoves(currentPlayer.getColor().opposite())) {
                 isGameOver = true;
@@ -296,7 +334,7 @@ public class GameManager {
             return true;
         }
         if (player1 instanceof HumanPlayer || player2 instanceof HumanPlayer) {
-            System.out.println("Current player: " + currentPlayer.getColor());
+            System.out.println("Joueur actuel : " + currentPlayer.getColor());
         }
         Move move = currentPlayer.getMove(board);
         if (move != null) {
@@ -321,16 +359,16 @@ public class GameManager {
         int blackCount = board.getDiscCount(Disc.BLACK);
         int whiteCount = board.getDiscCount(Disc.WHITE);
         
-        System.out.println("Game Over!");
-        System.out.println("Black: " + blackCount);
-        System.out.println("White: " + whiteCount);
+        System.out.println("Partie terminée !");
+        System.out.println("Noir : " + blackCount);
+        System.out.println("Blanc : " + whiteCount);
         
         if (blackCount > whiteCount) {
-            System.out.println("Black wins!");
+            System.out.println("Noir gagne !");
         } else if (whiteCount > blackCount) {
-            System.out.println("White wins!");
+            System.out.println("Blanc gagne !");
         } else {
-            System.out.println("It's a tie!");
+            System.out.println("Match nul !");
         }
     }
 

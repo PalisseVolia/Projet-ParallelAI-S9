@@ -13,7 +13,7 @@ import com.parallelai.models.utils.Model;
  * Unified AI player that uses a model to evaluate and select moves.
  */
 public class AIWeightedPlayer extends Player {
-    private final Model model;
+    public final Model model;
 
     public AIWeightedPlayer(Disc color, Model model) {
         super(color);

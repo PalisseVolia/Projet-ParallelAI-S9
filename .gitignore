@@ -27,3 +27,6 @@ projet/src/main/ressources/data/game_history.csv
 projet/target/classes/com/parallelai/export/GameStateExporter.class
 projet/target/classes/com/parallelai/export/implementations/ClassicThreadExporter.class
 projet/target/classes/com/parallelai/export/implementations/ParallelExporter$GameThreadNoSync.class
+projet/target/classes/com/parallelai/exec/play/GameManager$GameMode.class
+projet/target/classes/com/parallelai/exec/play/GameManager$GameMode.class
+projet/target/classes/com/parallelai/exec/play/GameManager.class
