@@ -45,7 +45,7 @@ public class Board {
     }
 
     /**
-     * Resets the board to its initial state with the four center pieces
+     * Réinitialise le plateau à son état initial avec les quatre pions centraux
      */
     public void reset() {
         initializeBoard();

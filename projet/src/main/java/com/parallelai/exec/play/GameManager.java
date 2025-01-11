@@ -274,8 +274,15 @@ public class GameManager {
             throw new IllegalArgumentException("Choix de modèle invalide");
         }
 
-        // Get model type (CNN or MLP)
+        // Get model type
         String modelType = models.get(modelTypeChoice - 1).name;
+        
+        // Skip database selection for Random model
+        if (modelType.equals("Random")) {
+            return ModelRegistry.createModel(modelTypeChoice - 1);
+        }
+
+        // For CNN and Dense models, select from database
         int dbType = modelType.equals("CNN") ? 1 : 2;
 
         // Afficher les modèles disponibles

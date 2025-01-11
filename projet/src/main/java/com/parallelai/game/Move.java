@@ -1,11 +1,11 @@
 package com.parallelai.game;
 
-/**
+/** 
  * Représente un coup dans le jeu d'Othello.
- * Cette classe encapsule:
+ * Cette classe encapsule :
  * - La position du coup (ligne et colonne)
  * - La couleur du pion à placer
- * Classe immutable: les attributs sont finals et ne peuvent pas être modifiés
+ * Classe immuable : les attributs sont finals et ne peuvent pas être modifiés
  * après création.
  */
 public class Move {
