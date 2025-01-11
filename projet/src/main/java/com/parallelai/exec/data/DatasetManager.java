@@ -1,4 +1,4 @@
-package com.parallelai.exec.play;
+package com.parallelai.exec.data;
 
 import com.parallelai.database.FileDatabaseManager;
 import com.parallelai.export.implementations.ClassicThreadExporter;
@@ -12,11 +12,11 @@ import java.util.List;
 import java.util.Scanner;
 
 @SuppressWarnings("unused")
-public class DataSetManager {
+public class DatasetManager {
     private static final String DATA_FOLDER = "projet\\src\\main\\ressources\\data\\";
     private final Scanner scanner;
 
-    public DataSetManager() {
+    public DatasetManager() {
         this.scanner = new Scanner(System.in);
     }
 
@@ -236,7 +236,7 @@ public class DataSetManager {
     }
 
     public static void main(String[] args) {
-        DataSetManager manager = new DataSetManager();
+        DatasetManager manager = new DatasetManager();
         manager.initialize();
     }
 }
