@@ -2,6 +2,7 @@ package com.parallelai.exec.app;
 
 import com.parallelai.exec.train.TrainerManager;
 import com.parallelai.exec.play.GameManager;
+import com.parallelai.exec.files.FilesManager;
 import java.util.Scanner;
 
 public class AppManager {
@@ -28,8 +29,7 @@ public class AppManager {
                     break;
                     
                 case 3:
-                    System.out.println("\n=== File Manager ===");
-                    System.out.println("This feature will be implemented soon.");
+                    new FilesManager().startFileManager();
                     break;
                     
                 case 4:
@@ -47,7 +47,7 @@ public class AppManager {
         System.out.println("\n=== Parallel AI Application ===");
         System.out.println("1. Play Game");
         System.out.println("2. Train Model");
-        System.out.println("3. Manage Files");
+        System.out.println("3. Delete Files");
         System.out.println("4. Exit");
         System.out.print("Enter your choice (1-4): ");
     }
