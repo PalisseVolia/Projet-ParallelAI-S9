@@ -16,6 +16,7 @@ import org.nd4j.linalg.dataset.api.iterator.DataSetIterator;
 import org.nd4j.linalg.learning.config.Adam;
 import org.nd4j.evaluation.regression.RegressionEvaluation;
 import org.nd4j.linalg.dataset.DataSet;
+import org.deeplearning4j.util.ModelSerializer;
 
 import java.io.*;
 
@@ -51,7 +52,7 @@ public class DenseTraining {
             .layer(new OutputLayer.Builder()
                 .nOut(1)
                 .activation(Activation.SIGMOID)
-                .lossFunction(org.nd4j.linalg.lossfunctions.LossFunctions.LossFunction.XENT)
+                .lossFunction(org.nd4j.linalg.lossfunctions.LossFunctions.LossFunction.MSE)
                 .build())
             .setInputType(InputType.convolutional(BOARD_SIZE, BOARD_SIZE, 1))
             .build();
@@ -65,6 +66,8 @@ public class DenseTraining {
         // Train model with evaluation after each epoch
         System.out.println("Starting training...");
         RegressionEvaluation finalEval = null;
+        double bestMSE = Double.MAX_VALUE;
+        MultiLayerNetwork bestModel = null;
         
         for (int i = 0; i < nEpochs; i++) {
             model.fit(trainIterator);
@@ -77,6 +80,18 @@ public class DenseTraining {
                 eval.eval(ds.getLabels(), model.output(ds.getFeatures()));
             }
             
+            // Check if current model is better
+            double currentMSE = eval.meanSquaredError(0);
+            if (currentMSE < bestMSE) {
+                bestMSE = currentMSE;
+                // Save the best model
+                File tempFile = File.createTempFile("bestmodel", "tmp");
+                ModelSerializer.writeModel(model, tempFile, true);
+                bestModel = ModelSerializer.restoreMultiLayerNetwork(tempFile);
+                tempFile.delete();
+                finalEval = eval;
+            }
+            
             // Print metrics
             System.out.println(String.format("Epoch %d/%d", (i + 1), nEpochs));
             System.out.println("MSE: " + eval.meanSquaredError(0));
@@ -84,14 +99,12 @@ public class DenseTraining {
             System.out.println("R²: " + eval.rSquared(0));
             System.out.println("--------------------");
             
-            finalEval = eval;
-            
             // Reset iterators
             trainIterator.reset();
             evalIterator.reset();
         }
 
-        // Return both model and evaluation
-        return new TrainerResult(model, finalEval);
+        // Return best model and its evaluation
+        return new TrainerResult(bestModel, finalEval);
     }
 }

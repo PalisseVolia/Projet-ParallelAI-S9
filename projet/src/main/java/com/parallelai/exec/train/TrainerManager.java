@@ -10,9 +10,6 @@ import java.io.File;
 import java.io.IOException;
 import java.text.DecimalFormat;
 import java.util.Scanner;
-import java.util.Arrays;
-import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * Gestionnaire d'entraînement des modèles.
@@ -27,39 +24,38 @@ public class TrainerManager {
     private static final String DATASET_DIR = "projet\\src\\main\\ressources\\data";
     
     /**
-     * Permet à l'utilisateur de sélectionner un jeu de données parmi ceux disponibles.
+     * Permet à l'utilisateur de sélectionner un jeu de données depuis la base de données.
      * 
      * @param scanner Scanner pour la saisie utilisateur
-     * @return Le chemin absolu vers le fichier de données sélectionné
-     * @throws RuntimeException Si le répertoire des datasets n'existe pas ou est vide
+     * @return Le chemin absolu vers le fichier de données téléchargé
+     * @throws RuntimeException Si aucun dataset n'est disponible dans la base
      * @throws IllegalArgumentException Si le choix de l'utilisateur est invalide
      */
     private String selectDataset(Scanner scanner) {
-        File dataDir = new File(DATASET_DIR);
-        if (!dataDir.exists() || !dataDir.isDirectory()) {
-            throw new RuntimeException("Répertoire de datasets non trouvé : " + dataDir.getAbsolutePath());
+        // Récupère les datasets disponibles dans la base de données
+        String[] datasets = FileDatabaseManager.getFileList(3);
+        
+        if (datasets.length == 0) {
+            throw new RuntimeException("Aucuns datasets disponibles dans la base de données");
         }
 
-        List<File> datasets = Arrays.stream(dataDir.listFiles())
-            .filter(file -> file.isFile() && file.getName().endsWith(".csv"))
-            .collect(Collectors.toList());
-
-        if (datasets.isEmpty()) {
-            throw new RuntimeException("Aucuns datasets trouvés: " + dataDir.getAbsolutePath());
+        System.out.println("\nDatasets disponibles :");
+        for (int i = 0; i < datasets.length; i++) {
+            System.out.println((i + 1) + ". " + datasets[i]);
         }
-
-        System.out.println("\nJeux de données disponibles :");
-        for (int i = 0; i < datasets.size(); i++) {
-            System.out.println((i + 1) + ". " + datasets.get(i).getName());
-        }
-        System.out.println("\nSélectionnez un jeu de données (1-" + datasets.size() + ") :");
+        System.out.println("\nSelectionnez un dataset (1-" + datasets.length + ") :");
         
         int choice = scanner.nextInt();
-        if (choice < 1 || choice > datasets.size()) {
+        if (choice < 1 || choice > datasets.length) {
             throw new IllegalArgumentException("Choix invalide");
         }
 
-        return datasets.get(choice - 1).getAbsolutePath();
+        // Télécharge le dataset sélectionné
+        String selectedDataset = datasets[choice - 1];
+        String localPath = DATASET_DIR + File.separator + selectedDataset;
+        FileDatabaseManager.downloadFile(selectedDataset, 3);
+
+        return localPath;
     }
     
     /**
@@ -157,38 +153,43 @@ public class TrainerManager {
      * et d'entraînement du modèle choisi.
      */
     public void startTraining() {
-        try (Scanner scanner = new Scanner(System.in)) {
-            String datasetPath = selectDataset(scanner);
-            
-            System.out.println("\nChoisissez le type de modèle à entraîner :");
-            System.out.println("1. Réseau de neurones dense (MLP)");
-            System.out.println("2. Réseau de neurones convolutif (CNN)");
-            
-            int choice = scanner.nextInt();
-            String modelName = getModelName(scanner);
-            int batchSize = getBatchSize(scanner);
-            int epochs = getEpochs(scanner);
-            
-            try {
-                TrainerResult result;
-                switch (choice) {
-                    case 1:
-                        System.out.println("Entraînement du réseau de neurones dense...");
-                        result = new DenseTraining().train(datasetPath, modelName, batchSize, epochs);
-                        saveModelWithMetrics(modelName, "MLP", result);
-                        break;
-                    case 2:
-                        System.out.println("Entraînement du CNN...");
-                        result = new CnnTraining().train(datasetPath, modelName, batchSize, epochs);
-                        saveModelWithMetrics(modelName, "CNN", result);
-                        break;
-                    default:
-                        System.out.println("Choix invalide. Veuillez sélectionner 1 ou 2.");
-                }
-            } catch (IOException e) {
-                System.err.println("Erreur pendant l'entraînement : " + e.getMessage());
-                e.printStackTrace();
+        Scanner scanner = new Scanner(System.in);
+        String datasetPath = selectDataset(scanner);
+        
+        System.out.println("\nChoisissez le type de modèle à entraîner :");
+        System.out.println("1. Réseau de neurones dense (MLP)");
+        System.out.println("2. Réseau de neurones convolutif (CNN)");
+        
+        int choice = scanner.nextInt();
+        String modelName = getModelName(scanner);
+        int batchSize = getBatchSize(scanner);
+        int epochs = getEpochs(scanner);
+        
+        try {
+            TrainerResult result;
+            switch (choice) {
+                case 1:
+                    System.out.println("Entraînement du réseau de neurones dense...");
+                    result = new DenseTraining().train(datasetPath, modelName, batchSize, epochs);
+                    saveModelWithMetrics(modelName, "MLP", result);
+                    break;
+                case 2:
+                    System.out.println("Entraînement du CNN...");
+                    result = new CnnTraining().train(datasetPath, modelName, batchSize, epochs);
+                    saveModelWithMetrics(modelName, "CNN", result);
+                    break;
+                default:
+                    System.out.println("Choix invalide. Veuillez sélectionner 1 ou 2.");
             }
+        } catch (IOException e) {
+            System.err.println("Erreur pendant l'entraînement : " + e.getMessage());
+            e.printStackTrace();
+        }
+
+        try {
+            new File(datasetPath).delete();
+        } catch (Exception e) {
+            System.err.println("Warning: Impossible de supprimerl e dataset local: " + e.getMessage());
         }
     }
 

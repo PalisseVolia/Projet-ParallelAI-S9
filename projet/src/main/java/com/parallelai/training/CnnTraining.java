@@ -16,6 +16,7 @@ import org.nd4j.linalg.activations.Activation;
 import org.nd4j.linalg.dataset.api.iterator.DataSetIterator;
 import org.nd4j.linalg.learning.config.Adam;
 import org.nd4j.linalg.dataset.DataSet;
+import org.deeplearning4j.util.ModelSerializer;
 
 import java.io.*;
 
@@ -54,7 +55,7 @@ public class CnnTraining {
                 .build())
             .layer(new OutputLayer.Builder()
                 .nOut(1)
-                .activation(Activation.IDENTITY)  // Using IDENTITY for regression
+                .activation(Activation.IDENTITY)
                 .lossFunction(org.nd4j.linalg.lossfunctions.LossFunctions.LossFunction.MSE)
                 .build())
             .setInputType(InputType.convolutional(BOARD_SIZE, BOARD_SIZE, 1))
@@ -69,6 +70,9 @@ public class CnnTraining {
         // Train model with evaluation after each epoch
         System.out.println("Starting training...");
         RegressionEvaluation finalEval = null;
+        double bestMSE = Double.MAX_VALUE;
+        MultiLayerNetwork bestModel = null;
+        
         for (int i = 0; i < nEpochs; i++) {
             model.fit(trainIterator);
             
@@ -81,7 +85,40 @@ public class CnnTraining {
                 eval.eval(ds.getLabels(), model.output(ds.getFeatures()));
             }
             
-            // Print metrics
+            // Si le modèle actuel est meilleur que le meilleur modèle précédent
+            double currentMSE = eval.meanSquaredError(0);
+            if (currentMSE < bestMSE) {
+                bestMSE = currentMSE;
+                // Sauvegarder le meilleur modèle
+                File tempFile = File.createTempFile("bestmodel", "tmp");
+                ModelSerializer.writeModel(model, tempFile, true);
+                bestModel = ModelSerializer.restoreMultiLayerNetwork(tempFile);
+                tempFile.delete();
+                finalEval = eval;
+            }
+
+            // TODO: =========================================TEMPORARY=========================================
+            // Get current model score (loss)
+            double currentLoss = model.score();
+            
+            // Export metrics to file
+            try (FileWriter fw = new FileWriter("tempMetrics.txt", true)) {
+                String metricsLine = String.format("Model=%s, Epoch %d/%d: BatchSize=%d, Loss=%.6f, MSE=%.6f, RMSE=%.6f, R²=%.6f%n",
+                    modelName,
+                    (i + 1),
+                    nEpochs,
+                    batchSize,
+                    currentLoss,
+                    eval.meanSquaredError(0),
+                    eval.rootMeanSquaredError(0),
+                    eval.rSquared(0));
+                fw.write(metricsLine);
+            } catch (IOException e) {
+                System.err.println("Error writing metrics to file: " + e.getMessage());
+            }
+            // TODO: =========================================TEMPORARY=========================================
+            
+            // Afficher les métriques
             System.out.println(String.format("Epoch %d/%d", (i + 1), nEpochs));
             System.out.println("MSE: " + eval.meanSquaredError(0));
             System.out.println("RMSE: " + eval.rootMeanSquaredError(0));
@@ -91,11 +128,9 @@ public class CnnTraining {
             // Reset iterators
             trainIterator.reset();
             evalIterator.reset();
-            
-            finalEval = eval;
         }
 
-        // Return both model and evaluation
-        return new TrainerResult(model, finalEval);
+        // Return le meilleur modèle et ses métriques finales
+        return new TrainerResult(bestModel, finalEval);
     }
 }
