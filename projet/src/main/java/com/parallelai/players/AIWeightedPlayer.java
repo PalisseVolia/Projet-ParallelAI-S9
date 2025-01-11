@@ -13,7 +13,7 @@ import com.parallelai.models.utils.Model;
  * Joueur IA qui utilise un modèle pour évaluer et sélectionner les coups.
  */
 public class AIWeightedPlayer extends Player {
-    private final Model model;
+    public final Model model;
     // La température contrôle la distribution des poids exponentiels
     // Les valeurs plus élevées rendent la probabilité de sélectionner un meilleur coup plsu élevée
     private final double temperature = 5.0;

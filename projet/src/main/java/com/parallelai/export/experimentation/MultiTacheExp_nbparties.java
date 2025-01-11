@@ -9,11 +9,20 @@ import com.parallelai.export.implementations.ClassicThreadExporter;
 import com.parallelai.models.RandomModel;
 import com.parallelai.models.utils.Model;
 
+/**
+ * Classe d'expérimentation pour évaluer l'impact du nombre de parties
+ * sur les performances des différentes implémentations de parallélisation.
+ * Cette classe permet de :
+ * - Tester avec différentes tailles de jeux de données
+ * - Maintenir un nombre fixe de threads
+ * - Comparer les performances selon le volume de données
+ */
 public class MultiTacheExp_nbparties {
-    private static final int[] NB_PARTIES_ARRAY = {1000, 2000, 5000, 10000, 20000, 35000, 50000,60000,70000};
-    private static final int NB_TESTS = 3; 
-    private static final int WARMUP_ITERATIONS = 3; // Ajout de warmup
-    private static final int NB_THREADS = 8;
+    // Configuration des tests avec différentes tailles
+    private static final int[] NB_PARTIES_ARRAY = {1000, 2000, 5000, 10000, 20000, 35000, 50000, 60000, 70000};
+    private static final int NB_TESTS = 3;           // Nombre de répétitions pour la fiabilité
+    private static final int WARMUP_ITERATIONS = 3;  // Itérations de préchauffage
+    private static final int NB_THREADS = 8;         // Nombre fixe de threads
     private static final String RESULTS_PATH = "projet/src/main/ressources/evaldata_multitache/threading_performance_varied_parties.csv";
 
     public static void main(String[] args) {

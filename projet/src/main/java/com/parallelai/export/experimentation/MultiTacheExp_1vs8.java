@@ -9,6 +9,14 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 
+/**
+ * Classe d'expérimentation pour comparer les performances
+ * entre l'exécution mono-thread et multi-thread (8 threads).
+ * Permet d'évaluer :
+ * - Le gain de performance avec la parallélisation
+ * - L'évolution des performances selon la taille des données
+ * - L'efficacité relative des deux approches
+ */
 public class MultiTacheExp_1vs8 {
     
     public static void main(String[] args) {
