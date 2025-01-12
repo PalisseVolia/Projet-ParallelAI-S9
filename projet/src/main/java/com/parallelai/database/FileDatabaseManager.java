@@ -1,18 +1,19 @@
 package com.parallelai.database;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.io.*;
+import java.sql.*;
 import java.util.Scanner;
 import java.nio.file.Paths;
 
+/**
+ * Gestionnaire de base de données pour les fichiers de modèles et de jeux de
+ * données.
+ * Cette classe gère :
+ * - L'insertion de fichiers dans la base de données
+ * - La suppression de fichiers de la base de données
+ * - Le listage des fichiers disponibles
+ * - Le téléchargement de fichiers depuis la base de données
+ */
 public class FileDatabaseManager {
     // Paramètres de connexion à la base de données
     private static final String URL = "jdbc:mysql://sql2.minestrator.com:3306/minesr_iVGkRPW9";
@@ -24,7 +25,12 @@ public class FileDatabaseManager {
     private static final String CnnModelPath = "projet\\src\\main\\ressources\\models\\CNN";
     private static final String MlpModelPath = "projet\\src\\main\\ressources\\models\\MLP";
 
-    // Programme principal de test
+    /**
+     * Point d'entrée principal pour tester les fonctionnalités de la base de
+     * données
+     * 
+     * @param args Arguments de la ligne de commande (non utilisés)
+     */
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
         int type = 0;
@@ -100,17 +106,22 @@ public class FileDatabaseManager {
         }
     }
 
-    // Insère un fichier dans la base de données
+    /**
+     * Insère un fichier dans la base de données
+     * 
+     * @param filePath Chemin du fichier à insérer
+     * @param type     Type de fichier (1: CNN, 2: MLP, 3: Dataset)
+     */
     public static void insertFile(String filePath, int type) {
         String sql;
         if (type == 3) {
             sql = "INSERT INTO dataSet (file_name, file_data) VALUES (?, ?)";
-            
+
             try (
-                Connection connection = DriverManager.getConnection(URL, USER, PASSWORD);
-                PreparedStatement preparedStatement = connection.prepareStatement(sql);
-                FileInputStream fileInputStream = new FileInputStream(new File(filePath))) {
-                
+                    Connection connection = DriverManager.getConnection(URL, USER, PASSWORD);
+                    PreparedStatement preparedStatement = connection.prepareStatement(sql);
+                    FileInputStream fileInputStream = new FileInputStream(new File(filePath))) {
+
                 preparedStatement.setString(1, new File(filePath).getName());
                 preparedStatement.setBinaryStream(2, fileInputStream, fileInputStream.available());
 
@@ -126,7 +137,7 @@ public class FileDatabaseManager {
             }
         } else {
             sql = "INSERT INTO model (file_name, file_data, model_type) VALUES (?, ?, ?)";
-            
+
             try (
                     Connection connection = DriverManager.getConnection(URL, USER, PASSWORD);
                     PreparedStatement preparedStatement = connection.prepareStatement(sql);
@@ -151,7 +162,12 @@ public class FileDatabaseManager {
         }
     }
 
-    // Supprime un fichier de la base de données
+    /**
+     * Supprime un fichier de la base de données
+     * 
+     * @param filePath Nom du fichier à supprimer
+     * @param type     Type de fichier (1: CNN, 2: MLP, 3: Dataset)
+     */
     public static void deleteFile(String filePath, int type) {
         if (type == 3) {
             String sql = "DELETE FROM dataSet WHERE file_name = ?"; // SQL statement for deletion
@@ -205,7 +221,11 @@ public class FileDatabaseManager {
         }
     }
 
-    // Liste tous les fichiers dans la base de données
+    /**
+     * Liste tous les fichiers d'un type donné dans la base de données
+     * 
+     * @param type Type de fichier (1: CNN, 2: MLP, 3: Dataset)
+     */
     public static void listFiles(int type) {
         if (type == 3) {
             String sql = "SELECT file_name FROM dataSet";
@@ -228,9 +248,9 @@ public class FileDatabaseManager {
             try (
                     Connection connection = DriverManager.getConnection(URL, USER, PASSWORD);
                     PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
-                
+
                 preparedStatement.setString(1, type == 1 ? "CNN" : "MLP");
-                
+
                 try (ResultSet resultSet = preparedStatement.executeQuery()) {
                     System.out.println("Fichiers dans la base de données :");
                     while (resultSet.next()) {
@@ -244,7 +264,12 @@ public class FileDatabaseManager {
         }
     }
 
-    // Télécharge un fichier depuis la base de données
+    /**
+     * Télécharge un fichier depuis la base de données vers le dossier par défaut
+     * 
+     * @param fileName Nom du fichier à télécharger
+     * @param type     Type de fichier (1: CNN, 2: MLP, 3: Dataset)
+     */
     public static void downloadFile(String fileName, int type) {
         String destinationPath;
         if (type == 3) {
@@ -255,13 +280,12 @@ public class FileDatabaseManager {
             destinationPath = MlpModelPath;
         }
 
-        String sql = type == 3 ? 
-            "SELECT file_data FROM dataSet WHERE file_name = ?" :
-            "SELECT file_data FROM model WHERE file_name = ? AND model_type = ?";
+        String sql = type == 3 ? "SELECT file_data FROM dataSet WHERE file_name = ?"
+                : "SELECT file_data FROM model WHERE file_name = ? AND model_type = ?";
 
         try (Connection connection = DriverManager.getConnection(URL, USER, PASSWORD);
-             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
-            
+                PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+
             preparedStatement.setString(1, fileName);
             if (type != 3) {
                 preparedStatement.setString(2, type == 1 ? "CNN" : "MLP");
@@ -271,7 +295,7 @@ public class FileDatabaseManager {
                 if (resultSet.next()) {
                     try (InputStream inputStream = resultSet.getBinaryStream("file_data")) {
                         String fullPath = Paths.get(destinationPath, fileName).toString();
-                        
+
                         // Create directories if they don't exist
                         new File(destinationPath).mkdirs();
 
@@ -295,15 +319,20 @@ public class FileDatabaseManager {
         }
     }
 
-    // Nouvelle surcharge de downloadFile avec chemin personnalisé
+    /**
+     * Télécharge un fichier depuis la base de données vers un chemin personnalisé
+     * 
+     * @param fileName   Nom du fichier à télécharger
+     * @param customPath Chemin de destination personnalisé
+     * @param type       Type de fichier (1: CNN, 2: MLP, 3: Dataset)
+     */
     public static void downloadFile(String fileName, String customPath, int type) {
-        String sql = type == 3 ? 
-            "SELECT file_data FROM dataSet WHERE file_name = ?" :
-            "SELECT file_data FROM model WHERE file_name = ? AND model_type = ?";
+        String sql = type == 3 ? "SELECT file_data FROM dataSet WHERE file_name = ?"
+                : "SELECT file_data FROM model WHERE file_name = ? AND model_type = ?";
 
         try (Connection connection = DriverManager.getConnection(URL, USER, PASSWORD);
-             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
-            
+                PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+
             preparedStatement.setString(1, fileName);
             if (type != 3) {
                 preparedStatement.setString(2, type == 1 ? "CNN" : "MLP");
@@ -335,19 +364,23 @@ public class FileDatabaseManager {
         }
     }
 
+    /**
+     * Récupère la liste des noms de fichiers d'un type donné
+     * 
+     * @param type Type de fichier (1: CNN, 2: MLP, 3: Dataset)
+     * @return Tableau des noms de fichiers disponibles
+     */
     public static String[] getFileList(int type) {
         java.util.List<String> files = new java.util.ArrayList<>();
-        String sql = type == 3 ? 
-            "SELECT file_name FROM dataSet" :
-            "SELECT file_name FROM model WHERE model_type = ?";
+        String sql = type == 3 ? "SELECT file_name FROM dataSet" : "SELECT file_name FROM model WHERE model_type = ?";
 
         try (Connection connection = DriverManager.getConnection(URL, USER, PASSWORD);
-             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
-            
+                PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+
             if (type != 3) {
                 preparedStatement.setString(1, type == 1 ? "CNN" : "MLP");
             }
-            
+
             try (ResultSet resultSet = preparedStatement.executeQuery()) {
                 while (resultSet.next()) {
                     files.add(resultSet.getString("file_name"));
@@ -360,6 +393,11 @@ public class FileDatabaseManager {
         return files.toArray(new String[0]);
     }
 
+    /**
+     * Affiche une liste numérotée d'éléments
+     * 
+     * @param items Tableau d'éléments à afficher
+     */
     private static void displayNumberedList(String[] items) {
         for (int i = 0; i < items.length; i++) {
             System.out.println((i + 1) + ". " + items[i]);

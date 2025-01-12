@@ -19,10 +19,10 @@ import com.parallelai.models.utils.Model;
  */
 public class MultiTacheExp_nbparties {
     // Configuration des tests avec différentes tailles
-    private static final int[] NB_PARTIES_ARRAY = {1000, 2000, 5000, 10000, 20000, 35000, 50000, 60000, 70000};
-    private static final int NB_TESTS = 3;           // Nombre de répétitions pour la fiabilité
-    private static final int WARMUP_ITERATIONS = 3;  // Itérations de préchauffage
-    private static final int NB_THREADS = 8;         // Nombre fixe de threads
+    private static final int[] NB_PARTIES_ARRAY = { 1000, 2000, 5000, 10000, 20000, 35000, 50000, 60000, 70000 };
+    private static final int NB_TESTS = 3; // Nombre de répétitions pour la fiabilité
+    private static final int WARMUP_ITERATIONS = 3; // Itérations de préchauffage
+    private static final int NB_THREADS = 8; // Nombre fixe de threads
     private static final String RESULTS_PATH = "projet/src/main/ressources/evaldata_multitache/threading_performance_varied_parties.csv";
 
     public static void main(String[] args) {
@@ -50,7 +50,7 @@ public class MultiTacheExp_nbparties {
         Model warmupModel1 = new RandomModel();
         Model warmupModel2 = new RandomModel();
         String warmupPath = "projet/src/main/ressources/evaldata_multitache/warmup.csv";
-        
+
         for (int i = 0; i < WARMUP_ITERATIONS; i++) {
             ParallelExporter warmupExporter = new ParallelExporter(warmupPath);
             warmupExporter.startGamesWithUniqueStatesParallel(1000, warmupModel1, warmupModel2, NB_THREADS);
@@ -61,20 +61,20 @@ public class MultiTacheExp_nbparties {
                 Thread.currentThread().interrupt();
             }
         }
-        
+
         System.out.println("Warmup terminé. Début des tests...\n");
-        
+
         // Tests pour chaque configuration de parties
         for (int nbParties : NB_PARTIES_ARRAY) {
             System.out.println("\nTest avec " + nbParties + " parties...");
             long[] executorTimes = new long[NB_TESTS];
             long[] classicTimes = new long[NB_TESTS];
-            
+
             String tempPath = "projet/src/main/ressources/evaldata_multitache/temp_game_history.csv";
-            
+
             for (int test = 0; test < NB_TESTS; test++) {
                 System.gc(); // Force garbage collection entre les tests
-                
+
                 // Test avec ParallelExporter
                 ParallelExporter parallelExporter = new ParallelExporter(tempPath);
                 long startTime = System.nanoTime(); // Plus précis que currentTimeMillis
@@ -90,12 +90,12 @@ public class MultiTacheExp_nbparties {
                 // Test avec ClassicThreadExporter
                 ClassicThreadExporter classicExporter = new ClassicThreadExporter(tempPath);
                 startTime = System.nanoTime();
-                classicExporter.startGamesWithUniqueStatesClassicThreads(nbParties, model1, model2, NB_THREADS,false);
+                classicExporter.startGamesWithUniqueStatesClassicThreads(nbParties, model1, model2, NB_THREADS, false);
                 classicTimes[test] = (System.nanoTime() - startTime) / 1_000_000;
 
-                System.out.printf("  Test %d/%d: ExecutorService=%d ms, Classic Threads=%d ms\n", 
-                    test + 1, NB_TESTS, executorTimes[test], classicTimes[test]);
-                
+                System.out.printf("  Test %d/%d: ExecutorService=%d ms, Classic Threads=%d ms\n",
+                        test + 1, NB_TESTS, executorTimes[test], classicTimes[test]);
+
                 try {
                     Thread.sleep(2000);
                 } catch (InterruptedException e) {
@@ -113,8 +113,8 @@ public class MultiTacheExp_nbparties {
             long avgClassic = sumClassic / NB_TESTS;
 
             try (FileWriter writer = new FileWriter(RESULTS_PATH, true)) {
-                writer.write(String.format("%d,%d,%d\n", 
-                    nbParties, avgExecutor, avgClassic));
+                writer.write(String.format("%d,%d,%d\n",
+                        nbParties, avgExecutor, avgClassic));
             } catch (IOException e) {
                 System.err.println("Erreur lors de l'écriture des résultats: " + e.getMessage());
             }

@@ -10,7 +10,8 @@ import com.parallelai.game.Player;
 import com.parallelai.models.utils.Model;
 
 /**
- * Joueur IA qui utilise un modèle pour évaluer et sélectionner les meilleurs coups.
+ * Joueur IA qui utilise un modèle pour évaluer et sélectionner les meilleurs
+ * coups.
  */
 public class AIPlayer extends Player {
     public final Model model;
@@ -37,8 +38,9 @@ public class AIPlayer extends Player {
     public Move getMove(Board board) {
         List<Move> validMoves = new ArrayList<>();
         List<Double> evaluations = new ArrayList<>();
-        
-        // Recherche des coups valides et obtention de leurs évaluations depuis le modèle
+
+        // Recherche des coups valides et obtention de leurs évaluations depuis le
+        // modèle
         for (int i = 0; i < 8; i++) {
             for (int j = 0; j < 8; j++) {
                 Move move = new Move(i, j, color);
@@ -74,7 +76,7 @@ public class AIPlayer extends Player {
         }
 
         // Sélectionne aléatoirement l'un des meilleurs coups
-        int randomIndex = (int)(Math.random() * bestMoves.size());
+        int randomIndex = (int) (Math.random() * bestMoves.size());
         return bestMoves.get(randomIndex);
     }
 }

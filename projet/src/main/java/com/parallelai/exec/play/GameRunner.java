@@ -9,6 +9,10 @@ import com.parallelai.game.Player;
 import com.parallelai.models.utils.Model;
 import com.parallelai.players.*;
 
+/**
+ * Classe responsable de l'exécution d'une partie d'Othello entre deux IA
+ * Implémente Callable pour permettre une exécution parallèle des parties
+ */
 public class GameRunner implements Callable<GameResult> {
     private final Model model1;
     private final Model model2;
@@ -19,8 +23,21 @@ public class GameRunner implements Callable<GameResult> {
     private Player localCurrentPlayer;
     private final Runnable progressCallback;
 
-    public enum AIType { REGULAR, WEIGHTED }
+    /**
+     * Types d'IA disponibles pour le jeu
+     */
+    public enum AIType {
+        REGULAR, WEIGHTED
+    }
 
+    /**
+     * Constructeur initialisant une nouvelle partie
+     * 
+     * @param model1           Modèle pour le premier joueur
+     * @param model2           Modèle pour le second joueur
+     * @param aiType           Type d'IA à utiliser
+     * @param progressCallback Callback appelé à la fin de chaque partie
+     */
     public GameRunner(Model model1, Model model2, AIType aiType, Runnable progressCallback) {
         this.model1 = model1;
         this.model2 = model2;
@@ -30,6 +47,9 @@ public class GameRunner implements Callable<GameResult> {
         setupLocalPlayers();
     }
 
+    /**
+     * Configure les joueurs locaux selon le type d'IA choisi
+     */
     private void setupLocalPlayers() {
         if (aiType == AIType.REGULAR) {
             localPlayer1 = new AIPlayer(Disc.BLACK, model1);
@@ -41,32 +61,52 @@ public class GameRunner implements Callable<GameResult> {
         localCurrentPlayer = localPlayer1;
     }
 
+    /**
+     * Exécute la partie jusqu'à sa fin et retourne le résultat
+     * 
+     * @return Le résultat de la partie (victoire noire, blanche ou égalité)
+     */
     @Override
     public GameResult call() {
+        // Boucle principale du jeu
         while (true) {
             if (!processLocalMove()) {
                 break;
             }
+            // Alternance des joueurs
             localCurrentPlayer = (localCurrentPlayer == localPlayer1) ? localPlayer2 : localPlayer1;
         }
-        
+
+        // Calcul du score final
         int blackCount = localBoard.getDiscCount(Disc.BLACK);
         int whiteCount = localBoard.getDiscCount(Disc.WHITE);
-        
+
         progressCallback.run();
-        
-        if (blackCount > whiteCount) return GameResult.BLACK_WINS;
-        else if (whiteCount > blackCount) return GameResult.WHITE_WINS;
-        else return GameResult.TIE;
+
+        // Détermination du vainqueur
+        if (blackCount > whiteCount)
+            return GameResult.BLACK_WINS;
+        else if (whiteCount > blackCount)
+            return GameResult.WHITE_WINS;
+        else
+            return GameResult.TIE;
     }
 
+    /**
+     * Traite un tour de jeu pour le joueur courant
+     * 
+     * @return false si la partie est terminée, true sinon
+     */
     private boolean processLocalMove() {
+        // Vérifie si le joueur courant peut jouer
         if (!localBoard.hasValidMoves(localCurrentPlayer.getColor())) {
+            // Vérifie si l'autre joueur peut jouer
             if (!localBoard.hasValidMoves(localCurrentPlayer.getColor().opposite())) {
-                return false;
+                return false; // Fin de partie si aucun joueur ne peut jouer
             }
-            return true;
+            return true; // Le joueur passe son tour
         }
+        // Exécution du coup
         Move move = localCurrentPlayer.getMove(localBoard);
         if (move != null) {
             localBoard.makeMove(move);

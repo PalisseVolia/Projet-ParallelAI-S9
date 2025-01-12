@@ -28,7 +28,7 @@ public class DenseModel implements Model {
     public DenseModel(String modelName) {
         try {
             ModelRegistry.initializeModelFromDatabase("MLP", modelName);
-            File modelFile = new File(MODEL_PATH+modelName);
+            File modelFile = new File(MODEL_PATH + modelName);
             if (!modelFile.exists()) {
                 throw new IOException("Fichier modèle non trouvé à l'emplacement : " + modelFile.getAbsolutePath());
             }
@@ -42,7 +42,7 @@ public class DenseModel implements Model {
     /**
      * Évalue un coup en utilisant le réseau de neurones dense.
      *
-     * @param move Le coup à évaluer
+     * @param move  Le coup à évaluer
      * @param board L'état actuel du plateau
      * @return Une valeur entre 0 et 1 représentant la qualité estimée du coup
      */
@@ -59,13 +59,13 @@ public class DenseModel implements Model {
 
             // Convertit l'état du plateau au format attendu par le MLP
             INDArray input = boardToINDArray(boardCopy);
-            
+
             // Obtient la prédiction du modèle
             INDArray output = network.output(input);
             return output.getDouble(0);
         } catch (Exception e) {
             System.err.println("Erreur lors de l'évaluation du coup : " + e.getMessage());
-            return 0.5; // Retourne un score neutre en cas d'erreur
+            return 0.5; // Return un score neutre en cas d'erreur
         }
     }
 
@@ -78,7 +78,7 @@ public class DenseModel implements Model {
     private INDArray boardToINDArray(Board board) {
         // Crée un tableau 2D de forme [1, 64] pour représenter l'état du plateau
         INDArray input = Nd4j.zeros(1, INPUT_SIZE);
-        
+
         Disc[][] grid = board.getGrid();
         // Remplit le tableau avec l'état du plateau
         int idx = 0;
@@ -92,11 +92,11 @@ public class DenseModel implements Model {
                 } else if (grid[i][j] == Disc.WHITE) {
                     value = -1;
                 }
-                input.putScalar(new int[]{0, idx}, value);
+                input.putScalar(new int[] { 0, idx }, value);
                 idx++;
             }
         }
-        
+
         return input;
     }
 }

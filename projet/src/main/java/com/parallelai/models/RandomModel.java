@@ -11,7 +11,7 @@ public class RandomModel implements Model {
     /**
      * Évalue un coup en retournant toujours une valeur constante.
      *
-     * @param move Le coup à évaluer
+     * @param move  Le coup à évaluer
      * @param board L'état actuel du plateau
      * @return 0.5, indiquant une probabilité égale pour tous les coups
      */

@@ -11,14 +11,14 @@ package com.parallelai.game;
 public class Board {
     /** Taille du plateau (8x8) */
     private static final int SIZE = 8;
-    
+
     /** Directions possibles pour retourner les pions */
     private static final int[][] DIRECTIONS = {
-        {-1, -1}, {-1, 0}, {-1, 1},
-        {0, -1},           {0, 1},
-        {1, -1},  {1, 0},  {1, 1}
+            { -1, -1 }, { -1, 0 }, { -1, 1 },
+            { 0, -1 }, { 0, 1 },
+            { 1, -1 }, { 1, 0 }, { 1, 1 }
     };
-    
+
     /** Grille du plateau stockant les pions */
     private Disc[][] grid;
 
@@ -70,7 +70,7 @@ public class Board {
      * Vérifie si un coup est valide selon les règles d'Othello.
      * Un coup est valide s'il permet de retourner au moins un pion adverse.
      * 
-     * @param move Le coup à vérifier
+     * @param move  Le coup à vérifier
      * @param color La couleur du joueur qui joue
      * @return true si le coup est valide
      */
@@ -88,16 +88,16 @@ public class Board {
     }
 
     private boolean isInBounds(Move move) {
-        return move.row >= 0 && move.row < SIZE && 
-               move.col >= 0 && move.col < SIZE;
+        return move.row >= 0 && move.row < SIZE &&
+                move.col >= 0 && move.col < SIZE;
     }
 
     /**
      * Vérifie si des pions seraient retournés dans une direction donnée.
      * 
-     * @param move Le coup à vérifier
+     * @param move      Le coup à vérifier
      * @param direction La direction à explorer
-     * @param color La couleur du joueur
+     * @param color     La couleur du joueur
      * @return true si des pions peuvent être retournés
      */
     private boolean wouldFlip(Move move, int[] direction, Disc color) {
@@ -106,7 +106,8 @@ public class Board {
         boolean foundOpponent = false;
 
         while (row >= 0 && row < SIZE && col >= 0 && col < SIZE) {
-            if (grid[row][col] == Disc.EMPTY) return false;
+            if (grid[row][col] == Disc.EMPTY)
+                return false;
             if (grid[row][col] == color.opposite()) {
                 foundOpponent = true;
             } else if (grid[row][col] == color && foundOpponent) {
@@ -135,11 +136,12 @@ public class Board {
     /**
      * Retourne les pions dans une direction donnée suite à un coup.
      * 
-     * @param move Le coup joué
+     * @param move      Le coup joué
      * @param direction La direction où retourner les pions
      */
     private void flipDiscs(Move move, int[] direction) {
-        if (!wouldFlip(move, direction, move.color)) return;
+        if (!wouldFlip(move, direction, move.color))
+            return;
 
         int row = move.row + direction[0];
         int col = move.col + direction[1];
@@ -197,6 +199,7 @@ public class Board {
 
     /**
      * Crée une copie profonde du plateau actuel
+     * 
      * @return Une nouvelle instance de Board avec le même état
      */
     public Board copy() {

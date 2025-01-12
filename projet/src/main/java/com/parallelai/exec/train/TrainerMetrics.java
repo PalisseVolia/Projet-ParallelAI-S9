@@ -54,7 +54,7 @@ public class TrainerMetrics extends BaseTrainingListener {
         double loss = model.score();
         bestLoss = Math.min(bestLoss, loss);
         long duration = System.currentTimeMillis() - startTime;
-        
+
         updateProgressBar(loss, duration);
     }
 
@@ -62,27 +62,27 @@ public class TrainerMetrics extends BaseTrainingListener {
      * Met à jour et affiche la barre de progression avec les métriques actuelles.
      * Affiche un résumé final lorsque l'entraînement est terminé.
      * 
-     * @param loss La valeur de loss de l'epoch courante
+     * @param loss     La valeur de loss de l'epoch courante
      * @param duration La durée d'exécution de l'epoch en millisecondes
      */
     private void updateProgressBar(double loss, long duration) {
         // Calcul du pourcentage de progression
         int percentage = (currentEpoch * 100) / totalEpochs;
         int bars = percentage / 2;
-        
+
         // Construction de la barre de progression visuelle
         StringBuilder progressBar = new StringBuilder("\r[");
         for (int i = 0; i < 50; i++) {
             progressBar.append(i < bars ? "=" : " ");
         }
-        
-        String metrics = String.format("] %d%% | Epoch %d/%d | Loss: %s | Best Loss: %s | Time: %.1fs ", 
-            percentage, currentEpoch, totalEpochs, 
-            df.format(loss), df.format(bestLoss), 
-            duration / 1000.0);
-            
+
+        String metrics = String.format("] %d%% | Epoch %d/%d | Loss: %s | Best Loss: %s | Time: %.1fs ",
+                percentage, currentEpoch, totalEpochs,
+                df.format(loss), df.format(bestLoss),
+                duration / 1000.0);
+
         System.out.print(progressBar.toString() + metrics);
-        
+
         if (currentEpoch == totalEpochs) {
             System.out.println("\nEntrainement terminé !");
             System.out.println("Final Loss: " + df.format(loss));

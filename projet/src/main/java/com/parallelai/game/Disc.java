@@ -10,10 +10,10 @@ package com.parallelai.game;
 public enum Disc {
     /** Case vide représentée par '.' */
     EMPTY('.'),
-    
+
     /** Pion noir représenté par 'B' */
     BLACK('B'),
-    
+
     /** Pion blanc représenté par 'W' */
     WHITE('W');
 

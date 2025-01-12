@@ -19,8 +19,9 @@ public class HumanPlayer extends Player {
     /**
      * Crée un nouveau joueur humain avec une couleur spécifique.
      * 
-     * @param color La couleur des pions du joueur (NOIR ou BLANC)
-     * @param scanner Le scanner pour lire les entrées console, ne doit pas être null
+     * @param color   La couleur des pions du joueur (NOIR ou BLANC)
+     * @param scanner Le scanner pour lire les entrées console, ne doit pas être
+     *                null
      */
     public HumanPlayer(Disc color, Scanner scanner) {
         super(color);

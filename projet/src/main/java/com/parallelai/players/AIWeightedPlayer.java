@@ -15,7 +15,8 @@ import com.parallelai.models.utils.Model;
 public class AIWeightedPlayer extends Player {
     public final Model model;
     // La température contrôle la distribution des poids exponentiels
-    // Les valeurs plus élevées rendent la probabilité de sélectionner un meilleur coup plsu élevée
+    // Les valeurs plus élevées rendent la probabilité de sélectionner un meilleur
+    // coup plus élevée
     private final double temperature = 5.0;
 
     /**
@@ -30,7 +31,8 @@ public class AIWeightedPlayer extends Player {
     }
 
     /**
-     * Détermine et retourne le prochain coup à jouer en utilisant le modèle d'évaluation.
+     * Détermine et retourne le prochain coup à jouer en utilisant le modèle
+     * d'évaluation.
      * Le coup est choisi de manière pondérée en fonction des évaluations du modèle.
      *
      * @param board L'état actuel du plateau de jeu
@@ -40,7 +42,7 @@ public class AIWeightedPlayer extends Player {
     public Move getMove(Board board) {
         List<Move> validMoves = new ArrayList<>();
         List<Double> evaluations = new ArrayList<>();
-        
+
         // Collecte des coups et leurs évaluations
         for (int i = 0; i < 8; i++) {
             for (int j = 0; j < 8; j++) {

@@ -12,28 +12,32 @@ import com.parallelai.players.AIWeightedPlayer;
 import java.util.*;
 
 /**
- * Implémentation de l'exportation parallèle des états de jeu utilisant les threads Java classiques.
+ * Implémentation de l'exportation parallèle des états de jeu utilisant les
+ * threads Java classiques.
  * Cette classe permet de :
  * - Jouer plusieurs parties d'Othello en parallèle
  * - Sauvegarder l'historique unique des états de jeu
- * - Gérer différents types de joueurs (modèles standards, AI players, weighted AI players)
+ * - Gérer différents types de joueurs (modèles standards, AI players, weighted
+ * AI players)
  * - Optimiser les performances avec un système de batch
  * - Fusionner les données avec un fichier existant
  */
 public class ClassicThreadExporter extends GameStateExporter {
-    
+
     /**
      * Classe interne pour stocker les statistiques de jeu de manière thread-safe
      */
     private class GameStats {
-        int blackWins = 0;     // Nombre de victoires des noirs
-        int whiteWins = 0;     // Nombre de victoires des blancs
-        int draws = 0;         // Nombre de matchs nuls
+        int blackWins = 0; // Nombre de victoires des noirs
+        int whiteWins = 0; // Nombre de victoires des blancs
+        int draws = 0; // Nombre de matchs nuls
     }
 
     /**
      * Constructeur de l'exporteur
-     * @param outputPath Chemin du fichier de sortie (peut être null si pas de sauvegarde)
+     * 
+     * @param outputPath Chemin du fichier de sortie (peut être null si pas de
+     *                   sauvegarde)
      */
     public ClassicThreadExporter(String outputPath) {
         super(outputPath);
@@ -41,7 +45,8 @@ public class ClassicThreadExporter extends GameStateExporter {
 
     /**
      * Version de base - Surcharge pour les modèles standards
-     * Cette implémentation est optimisée pour les modèles de base et sert de référence pour les autres surcharges.
+     * Cette implémentation est optimisée pour les modèles de base et sert de
+     * référence pour les autres surcharges.
      * 
      * Caractéristiques spécifiques :
      * - Utilisation directe des modèles sans wrapper
@@ -54,27 +59,31 @@ public class ClassicThreadExporter extends GameStateExporter {
      * 3. Exécution parallèle des parties
      * 4. Fusion des résultats et export
      */
-    public void startGamesWithUniqueStatesClassicThreads(int nbParties, Model model1, Model model2, int nbThreads, boolean appendToExisting) {
-        // Initialisation des structures de données pour le suivi des états et statistiques
+    public void startGamesWithUniqueStatesClassicThreads(int nbParties, Model model1, Model model2, int nbThreads,
+            boolean appendToExisting) {
+        // Initialisation des structures de données pour le suivi des états et
+        // statistiques
         Map<String, double[]> existingData = new HashMap<>();
         GameStats globalStats = new GameStats();
-        
+
         // Gestion des données existantes si demandé (mode fusion)
         if (appendToExisting) {
             System.out.println("Chargement des données existantes...");
             existingData = loadExistingCSV();
             System.out.println(existingData.size() + " états déjà existants chargés.");
         }
-        
-        System.out.println("Début des " + nbParties + " parties avec " + nbThreads + " threads (version classique)...\n");
+
+        System.out
+                .println("Début des " + nbParties + " parties avec " + nbThreads + " threads (version classique)...\n");
         ProgressBar.initDisplay(nbThreads);
 
         // Configuration du multithreading
         Thread[] threads = new Thread[nbThreads];
         @SuppressWarnings("unchecked")
-        Map<String, double[]>[] threadResults = new HashMap[nbThreads]; // Un HashMap par thread pour éviter les conflits
-        ProgressBar[] progressBars = new ProgressBar[nbThreads];       // Barres de progression individuelles
-        
+        Map<String, double[]>[] threadResults = new HashMap[nbThreads]; // Un HashMap par thread pour éviter les
+                                                                        // conflits
+        ProgressBar[] progressBars = new ProgressBar[nbThreads]; // Barres de progression individuelles
+
         // Distribution équitable des parties entre les threads
         int partiesPerThread = nbParties / nbThreads;
         final int BATCH_SIZE = 1000; // Optimisation : traitement par lots de 1000 états
@@ -83,13 +92,13 @@ public class ClassicThreadExporter extends GameStateExporter {
         for (int i = 0; i < nbThreads; i++) {
             // Configuration spécifique à chaque thread
             final int threadId = i;
-            threadResults[i] = new HashMap<>();             // Map locale pour ce thread
+            threadResults[i] = new HashMap<>(); // Map locale pour ce thread
             final Map<String, double[]> localStateMap = threadResults[i];
             final StateBuffer stateBuffer = new StateBuffer(); // Buffer d'états pour ce thread
-            
+
             // Ajustement du nombre de parties pour le dernier thread
-            final int partiesForThisThread = (i == nbThreads - 1) ? 
-                partiesPerThread + (nbParties % nbThreads) : partiesPerThread;
+            final int partiesForThisThread = (i == nbThreads - 1) ? partiesPerThread + (nbParties % nbThreads)
+                    : partiesPerThread;
 
             progressBars[i] = new ProgressBar(partiesForThisThread, threadId);
 
@@ -98,7 +107,7 @@ public class ClassicThreadExporter extends GameStateExporter {
                 // Variables de suivi locales
                 int gamesCompleted = 0;
                 List<GameState> batchBuffer = new ArrayList<>(BATCH_SIZE);
-                
+
                 // Boucle principale de simulation des parties
                 for (int game = 0; game < partiesForThisThread; game++) {
                     // Initialisation d'une nouvelle partie
@@ -114,10 +123,10 @@ public class ClassicThreadExporter extends GameStateExporter {
                     // Traitement du résultat
                     int result = calculateGameResult(board);
                     double finalResult = result == 1 ? 1.0 : result == 0 ? 0.5 : 0.0;
-                    
+
                     // Ajout à la mémoire tampon
                     batchBuffer.add(new GameState(history, result));
-                    
+
                     // Traitement par lot si la taille limite est atteinte
                     if (batchBuffer.size() >= BATCH_SIZE) {
                         processBatchLocal(batchBuffer, localStateMap, finalResult);
@@ -125,7 +134,7 @@ public class ClassicThreadExporter extends GameStateExporter {
                     }
 
                     // Mise à jour thread-safe des statistiques globales
-                    synchronized(globalStats) {
+                    synchronized (globalStats) {
                         updateStats(globalStats, result);
                     }
 
@@ -135,12 +144,12 @@ public class ClassicThreadExporter extends GameStateExporter {
                         progressBars[threadId].update(gamesCompleted);
                     }
                 }
-                
+
                 // Traitement des états restants dans le buffer
                 if (!batchBuffer.isEmpty()) {
                     processBatchLocal(batchBuffer, localStateMap, 0.0);
                 }
-                
+
                 progressBars[threadId].update(partiesForThisThread);
             });
 
@@ -176,7 +185,7 @@ public class ClassicThreadExporter extends GameStateExporter {
         if (appendToExisting) {
             // Fusion intelligente des données existantes avec les nouvelles
             Map<String, double[]> mergedMap = new HashMap<>(existingData); // Copie les données existantes
-            
+
             finalMap.forEach((key, newValue) -> {
                 mergedMap.compute(key, (k, existingValue) -> {
                     if (existingValue == null) {
@@ -190,7 +199,7 @@ public class ClassicThreadExporter extends GameStateExporter {
                     }
                 });
             });
-            
+
             finalMap = mergedMap; // Remplace finalMap par la version fusionnée
         }
 
@@ -216,25 +225,27 @@ public class ClassicThreadExporter extends GameStateExporter {
      * - Pas de conversion nécessaire entre Model et AIPlayer
      * - Accès direct aux fonctionnalités AI
      */
-    public void startGamesWithUniqueStatesClassicThreads(int nbParties, AIPlayer player1, AIPlayer player2, int nbThreads, boolean appendToExisting) {
+    public void startGamesWithUniqueStatesClassicThreads(int nbParties, AIPlayer player1, AIPlayer player2,
+            int nbThreads, boolean appendToExisting) {
         // Similaire à la version Model, mais adaptée aux AIPlayers
         // Les différences principales sont :
         // 1. Utilisation directe des modèles des joueurs AI
         // 2. Gestion spécifique des configurations AI
         // 3. Possibilité d'accéder aux paramètres spécifiques des AI
-        
+
         // Structures de données et configuration initiale
         Map<String, double[]> existingData = new HashMap<>();
         GameStats globalStats = new GameStats();
-        
+
         // Charger les données existantes seulement si demandé
         if (appendToExisting) {
             System.out.println("Chargement des données existantes...");
             existingData = loadExistingCSV();
             System.out.println(existingData.size() + " états déjà existants chargés.");
         }
-        
-        System.out.println("Début des " + nbParties + " parties avec " + nbThreads + " threads (version classique)...\n");
+
+        System.out
+                .println("Début des " + nbParties + " parties avec " + nbThreads + " threads (version classique)...\n");
         ProgressBar.initDisplay(nbThreads);
 
         // Configuration du multithreading similaire
@@ -242,7 +253,7 @@ public class ClassicThreadExporter extends GameStateExporter {
         @SuppressWarnings("unchecked")
         Map<String, double[]>[] threadResults = new HashMap[nbThreads];
         ProgressBar[] progressBars = new ProgressBar[nbThreads];
-        
+
         int partiesPerThread = nbParties / nbThreads;
         final int BATCH_SIZE = 1000;
 
@@ -252,15 +263,15 @@ public class ClassicThreadExporter extends GameStateExporter {
             threadResults[i] = new HashMap<>();
             final Map<String, double[]> localStateMap = threadResults[i];
             final StateBuffer stateBuffer = new StateBuffer();
-            
-            final int partiesForThisThread = (i == nbThreads - 1) ? 
-                partiesPerThread + (nbParties % nbThreads) : partiesPerThread;
+
+            final int partiesForThisThread = (i == nbThreads - 1) ? partiesPerThread + (nbParties % nbThreads)
+                    : partiesPerThread;
 
             progressBars[i] = new ProgressBar(partiesForThisThread, threadId);
 
             threads[i] = new Thread(() -> {
                 int gamesCompleted = 0;
-                List<GameState> batchBuffer = new ArrayList<>(BATCH_SIZE);              
+                List<GameState> batchBuffer = new ArrayList<>(BATCH_SIZE);
                 for (int game = 0; game < partiesForThisThread; game++) {
                     Board board = new Board();
                     GameManager gameManager = new GameManager(board, player1.model, player2.model);
@@ -272,13 +283,13 @@ public class ClassicThreadExporter extends GameStateExporter {
 
                     int result = calculateGameResult(board);
                     batchBuffer.add(new GameState(history, result));
-                    
+
                     if (batchBuffer.size() >= BATCH_SIZE) {
                         processBatchLocal(batchBuffer, localStateMap, 0.0);
                         batchBuffer.clear();
                     }
 
-                    synchronized(globalStats) {
+                    synchronized (globalStats) {
                         updateStats(globalStats, result);
                     }
 
@@ -287,11 +298,11 @@ public class ClassicThreadExporter extends GameStateExporter {
                         progressBars[threadId].update(gamesCompleted);
                     }
                 }
-                
+
                 if (!batchBuffer.isEmpty()) {
                     processBatchLocal(batchBuffer, localStateMap, 0.0);
                 }
-                
+
                 progressBars[threadId].update(partiesForThisThread);
             });
 
@@ -323,7 +334,7 @@ public class ClassicThreadExporter extends GameStateExporter {
         if (appendToExisting) {
             // Fusion intelligente des données existantes avec les nouvelles
             Map<String, double[]> mergedMap = new HashMap<>(existingData); // Copie les données existantes
-            
+
             finalMap.forEach((key, newValue) -> {
                 mergedMap.compute(key, (k, existingValue) -> {
                     if (existingValue == null) {
@@ -337,7 +348,7 @@ public class ClassicThreadExporter extends GameStateExporter {
                     }
                 });
             });
-            
+
             finalMap = mergedMap; // Remplace finalMap par la version fusionnée
         }
 
@@ -350,9 +361,10 @@ public class ClassicThreadExporter extends GameStateExporter {
         displayGameStats(globalStats);
     }
 
-     /**
+    /**
      * Deuxième surcharge - Version pour les joueurs AI avec système de pondération
-     * Spécialisée pour gérer les joueurs utilisant des stratégies de sélection pondérée.
+     * Spécialisée pour gérer les joueurs utilisant des stratégies de sélection
+     * pondérée.
      * 
      * Fonctionnalités spécifiques :
      * - Gestion des poids pour la sélection des coups
@@ -369,25 +381,27 @@ public class ClassicThreadExporter extends GameStateExporter {
      * - L'exploration de stratégies diverses
      * - L'optimisation des paramètres de jeu
      */
-    public void startGamesWithUniqueStatesClassicThreads(int nbParties, AIWeightedPlayer player1, AIWeightedPlayer player2, int nbThreads, boolean appendToExisting) {
+    public void startGamesWithUniqueStatesClassicThreads(int nbParties, AIWeightedPlayer player1,
+            AIWeightedPlayer player2, int nbThreads, boolean appendToExisting) {
         // Version spécialisée pour les joueurs AI avec pondération
         // Particularités :
         // 1. Gestion des poids spécifiques à chaque joueur
         // 2. Utilisation du système de pondération pour la sélection des coups
         // 3. Possibilité d'ajuster les poids pendant la partie
-        
+
         // Configuration initiale similaire
         Map<String, double[]> existingData = new HashMap<>();
         GameStats globalStats = new GameStats();
-        
+
         // Charger les données existantes seulement si demandé
         if (appendToExisting) {
             System.out.println("Chargement des données existantes...");
             existingData = loadExistingCSV();
             System.out.println(existingData.size() + " états déjà existants chargés.");
         }
-        
-        System.out.println("Début des " + nbParties + " parties avec " + nbThreads + " threads (version classique)...\n");
+
+        System.out
+                .println("Début des " + nbParties + " parties avec " + nbThreads + " threads (version classique)...\n");
         ProgressBar.initDisplay(nbThreads);
 
         // Configuration du multithreading avec gestion des poids
@@ -395,7 +409,7 @@ public class ClassicThreadExporter extends GameStateExporter {
         @SuppressWarnings("unchecked")
         Map<String, double[]>[] threadResults = new HashMap[nbThreads];
         ProgressBar[] progressBars = new ProgressBar[nbThreads];
-        
+
         int partiesPerThread = nbParties / nbThreads;
         final int BATCH_SIZE = 1000;
 
@@ -405,15 +419,15 @@ public class ClassicThreadExporter extends GameStateExporter {
             threadResults[i] = new HashMap<>();
             final Map<String, double[]> localStateMap = threadResults[i];
             final StateBuffer stateBuffer = new StateBuffer();
-            
-            final int partiesForThisThread = (i == nbThreads - 1) ? 
-                partiesPerThread + (nbParties % nbThreads) : partiesPerThread;
+
+            final int partiesForThisThread = (i == nbThreads - 1) ? partiesPerThread + (nbParties % nbThreads)
+                    : partiesPerThread;
 
             progressBars[i] = new ProgressBar(partiesForThisThread, threadId);
 
             threads[i] = new Thread(() -> {
                 int gamesCompleted = 0;
-                List<GameState> batchBuffer = new ArrayList<>(BATCH_SIZE);                
+                List<GameState> batchBuffer = new ArrayList<>(BATCH_SIZE);
                 for (int game = 0; game < partiesForThisThread; game++) {
                     Board board = new Board();
                     GameManager gameManager = new GameManager(board, player1, player2);
@@ -425,13 +439,13 @@ public class ClassicThreadExporter extends GameStateExporter {
 
                     int result = calculateGameResult(board);
                     batchBuffer.add(new GameState(history, result));
-                    
+
                     if (batchBuffer.size() >= BATCH_SIZE) {
                         processBatchLocal(batchBuffer, localStateMap, 0.0);
                         batchBuffer.clear();
                     }
 
-                    synchronized(globalStats) {
+                    synchronized (globalStats) {
                         updateStats(globalStats, result);
                     }
 
@@ -440,11 +454,11 @@ public class ClassicThreadExporter extends GameStateExporter {
                         progressBars[threadId].update(gamesCompleted);
                     }
                 }
-                
+
                 if (!batchBuffer.isEmpty()) {
                     processBatchLocal(batchBuffer, localStateMap, 0.0);
                 }
-                
+
                 progressBars[threadId].update(partiesForThisThread);
             });
 
@@ -476,7 +490,7 @@ public class ClassicThreadExporter extends GameStateExporter {
         if (appendToExisting) {
             // Fusion intelligente des données existantes avec les nouvelles
             Map<String, double[]> mergedMap = new HashMap<>(existingData); // Copie les données existantes
-            
+
             finalMap.forEach((key, newValue) -> {
                 mergedMap.compute(key, (k, existingValue) -> {
                     if (existingValue == null) {
@@ -490,7 +504,7 @@ public class ClassicThreadExporter extends GameStateExporter {
                     }
                 });
             });
-            
+
             finalMap = mergedMap; // Remplace finalMap par la version fusionnée
         }
 
@@ -505,10 +519,11 @@ public class ClassicThreadExporter extends GameStateExporter {
 
     /**
      * Traite un lot d'états de jeu pour optimiser les performances.
-     * Utilise un système de batch pour réduire les accès mémoire et améliorer les performances.
+     * Utilise un système de batch pour réduire les accès mémoire et améliorer les
+     * performances.
      * 
-     * @param batch Liste des états de jeu à traiter en une fois
-     * @param localMap Map locale du thread pour stocker les états
+     * @param batch       Liste des états de jeu à traiter en une fois
+     * @param localMap    Map locale du thread pour stocker les états
      * @param finalResult Résultat final de la partie
      */
     private void processBatchLocal(List<GameState> batch, Map<String, double[]> localMap, double finalResult) {
@@ -516,7 +531,7 @@ public class ClassicThreadExporter extends GameStateExporter {
         for (GameState game : batch) {
             // Conversion du résultat en valeur numérique
             double gameResult = game.result == 1 ? 1.0 : game.result == 0 ? 0.5 : 0.0;
-            
+
             // Traitement de chaque état de l'historique de la partie
             for (CompressedState state : game.history) {
                 String key = state.toString();
@@ -529,17 +544,18 @@ public class ClassicThreadExporter extends GameStateExporter {
      * Traite un état individuel et l'ajoute à la map locale du thread.
      * Gère la création de nouveaux états ou la mise à jour des états existants.
      * 
-     * @param localMap Map locale du thread
-     * @param key Clé unique de l'état
-     * @param state État compressé à traiter
+     * @param localMap    Map locale du thread
+     * @param key         Clé unique de l'état
+     * @param state       État compressé à traiter
      * @param finalResult Résultat final associé à cet état
      */
-    private void processStateLocal(Map<String, double[]> localMap, String key, CompressedState state, double finalResult) {
+    private void processStateLocal(Map<String, double[]> localMap, String key, CompressedState state,
+            double finalResult) {
         double[] existing = localMap.get(key);
         if (existing == null) {
             // Création d'un nouvel état
             double[] newState = state.decompress();
-            
+
             // Vérification et ajustement de la taille du tableau
             if (newState.length != 67) {
                 double[] resizedState = new double[67];
@@ -548,14 +564,14 @@ public class ClassicThreadExporter extends GameStateExporter {
             }
 
             // Initialisation des métriques de l'état
-            newState[64] = 0;           // moyenne (calculée à l'export)
+            newState[64] = 0; // moyenne (calculée à l'export)
             newState[65] = finalResult; // somme totale
-            newState[66] = 1.0;        // nombre d'occurrences
+            newState[66] = 1.0; // nombre d'occurrences
             localMap.put(key, newState);
         } else {
             // Mise à jour d'un état existant
             existing[65] += finalResult; // Ajout à la somme
-            existing[66] += 1.0;        // Incrémentation du compteur
+            existing[66] += 1.0; // Incrémentation du compteur
         }
     }
 
@@ -577,18 +593,23 @@ public class ClassicThreadExporter extends GameStateExporter {
     /**
      * Met à jour les statistiques de jeu de manière thread-safe.
      * 
-     * @param stats Objet de statistiques à mettre à jour
-     * @param result Résultat de la partie à ajouter (-1: blanc gagne, 0: nul, 1: noir gagne)
+     * @param stats  Objet de statistiques à mettre à jour
+     * @param result Résultat de la partie à ajouter (-1: blanc gagne, 0: nul, 1:
+     *               noir gagne)
      */
     private void updateStats(GameStats stats, int result) {
-        if (result == 1) stats.blackWins++;
-        else if (result == -1) stats.whiteWins++;
-        else stats.draws++;
+        if (result == 1)
+            stats.blackWins++;
+        else if (result == -1)
+            stats.whiteWins++;
+        else
+            stats.draws++;
     }
 
     /**
      * Méthode principale pour tester les fonctionnalités de l'exporteur.
-     * Effectue des tests avec et sans fichier existant pour valider le fonctionnement.
+     * Effectue des tests avec et sans fichier existant pour valider le
+     * fonctionnement.
      * 
      * @param args Arguments de la ligne de commande (non utilisés)
      */
@@ -597,15 +618,15 @@ public class ClassicThreadExporter extends GameStateExporter {
         int nbParties = 10000;
         int nbThreads = Runtime.getRuntime().availableProcessors();
         String outputPath = "datataset_pour_cherif.csv";
-        
+
         // Création des modèles pour le test
         Model model1 = new RandomModel();
         Model model2 = new RandomModel();
-        
+
         System.out.println("=== Test sans fichier existant ===");
         ClassicThreadExporter exporter = new ClassicThreadExporter(outputPath);
         exporter.startGamesWithUniqueStatesClassicThreads(nbParties, model1, model2, nbThreads, false);
-        
+
         // Récupérer le nombre de situations de la première exécution
         int firstRunSize = 0;
         try {
@@ -615,17 +636,17 @@ public class ClassicThreadExporter extends GameStateExporter {
         } catch (Exception e) {
             System.err.println("Erreur lors de la lecture du premier fichier");
         }
-        
+
         try {
             Thread.sleep(2000);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         }
-        
+
         System.out.println("\n=== Test avec fichier existant ===");
         ClassicThreadExporter exporter2 = new ClassicThreadExporter(outputPath);
         exporter2.startGamesWithUniqueStatesClassicThreads(nbParties, model1, model2, nbThreads, true);
-        
+
         // Vérifier le nombre final de situations
         try {
             Map<String, double[]> finalData = exporter2.loadExistingCSV();
@@ -636,4 +657,3 @@ public class ClassicThreadExporter extends GameStateExporter {
         }
     }
 }
-

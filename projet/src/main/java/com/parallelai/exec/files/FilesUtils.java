@@ -13,28 +13,29 @@ import java.util.stream.Stream;
  * et répertoires liés aux modèles d'IA.
  */
 public class FilesUtils {
-    
+
     /**
      * Nettoie les répertoires contenant les modèles d'IA.
      * Cette méthode supprime tous les fichiers contenus dans les dossiers
      * des modèles CNN et MLP, tout en préservant les répertoires eux-mêmes.
      *
-     * @throws IOException Si une erreur survient lors de la suppression des fichiers
+     * @throws IOException Si une erreur survient lors de la suppression des
+     *                     fichiers
      */
     public static void clearModelDirectories() throws IOException {
         String[] modelPaths = {
-            "projet\\src\\main\\ressources\\models\\CNN",
-            "projet\\src\\main\\ressources\\models\\MLP"
+                "projet\\src\\main\\ressources\\models\\CNN",
+                "projet\\src\\main\\ressources\\models\\MLP"
         };
-        
+
         for (String modelPath : modelPaths) {
             Path path = Path.of(modelPath);
             if (Files.exists(path)) {
                 try (Stream<Path> walk = Files.walk(path)) {
                     walk.sorted(Comparator.reverseOrder())
-                        .map(Path::toFile)
-                        .filter(file -> !file.getPath().equals(path.toString()))
-                        .forEach(File::delete);
+                            .map(Path::toFile)
+                            .filter(file -> !file.getPath().equals(path.toString()))
+                            .forEach(File::delete);
                 }
             }
         }

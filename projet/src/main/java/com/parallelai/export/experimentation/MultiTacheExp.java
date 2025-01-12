@@ -10,7 +10,8 @@ import com.parallelai.models.RandomModel;
 import com.parallelai.models.utils.Model;
 
 /**
- * Classe d'expérimentation pour comparer les performances des différentes implémentations
+ * Classe d'expérimentation pour comparer les performances des différentes
+ * implémentations
  * de parallélisation avec un nombre variable de threads.
  * Cette classe permet de :
  * - Tester les performances avec différents nombres de threads
@@ -19,10 +20,11 @@ import com.parallelai.models.utils.Model;
  */
 public class MultiTacheExp {
     // Constantes de configuration
-    private static final int NB_PARTIES = 5000;      // Nombre de parties par test
-    private static final int NB_TESTS = 3;           // Nombre de répétitions des tests
-    private static final int WARMUP_ITERATIONS = 3;  // Nombre d'itérations de préchauffage
-    private static final String RESULTS_PATH = String.format("projet/src/main/ressources/evaldata_multitache/threading_performance_%dparties.csv", NB_PARTIES);
+    private static final int NB_PARTIES = 5000; // Nombre de parties par test
+    private static final int NB_TESTS = 3; // Nombre de répétitions des tests
+    private static final int WARMUP_ITERATIONS = 3; // Nombre d'itérations de préchauffage
+    private static final String RESULTS_PATH = String
+            .format("projet/src/main/ressources/evaldata_multitache/threading_performance_%dparties.csv", NB_PARTIES);
 
     public static void main(String[] args) {
         File directory = new File("projet/src/main/ressources/evaldata_multitache");
@@ -51,10 +53,10 @@ public class MultiTacheExp {
         Model warmupModel1 = new RandomModel();
         Model warmupModel2 = new RandomModel();
         String warmupPath = "projet/src/main/ressources/evaldata_multitache/warmup.csv";
-        
+
         for (int i = 0; i < WARMUP_ITERATIONS; i++) {
             ParallelExporter warmupExporter = new ParallelExporter(warmupPath);
-            warmupExporter.startGamesWithUniqueStatesParallel(NB_PARTIES/4, warmupModel1, warmupModel2, maxThreads);
+            warmupExporter.startGamesWithUniqueStatesParallel(NB_PARTIES / 4, warmupModel1, warmupModel2, maxThreads);
             System.gc(); // Force garbage collection
             try {
                 Thread.sleep(1000);
@@ -62,20 +64,20 @@ public class MultiTacheExp {
                 Thread.currentThread().interrupt();
             }
         }
-        
+
         System.out.println("Warmup terminé. Début des tests...\n");
-        
+
         // Tests pour chaque configuration de threads
         for (int nbThreads = 1; nbThreads <= maxThreads; nbThreads++) {
             System.out.println("\nTest avec " + nbThreads + " thread(s)...");
             long[] executorTimes = new long[NB_TESTS];
             long[] classicTimes = new long[NB_TESTS];
-            
+
             String tempPath = "projet/src/main/ressources/evaldata_multitache/temp_game_history.csv";
-            
+
             for (int test = 0; test < NB_TESTS; test++) {
                 System.gc(); // Force garbage collection entre les tests
-                
+
                 // Test avec ParallelExporter
                 ParallelExporter parallelExporter = new ParallelExporter(tempPath);
                 long startTime = System.nanoTime(); // Plus précis que currentTimeMillis
@@ -91,12 +93,12 @@ public class MultiTacheExp {
                 // Test avec ClassicThreadExporter
                 ClassicThreadExporter classicExporter = new ClassicThreadExporter(tempPath);
                 startTime = System.nanoTime();
-                classicExporter.startGamesWithUniqueStatesClassicThreads(NB_PARTIES, model1, model2, nbThreads,false);
+                classicExporter.startGamesWithUniqueStatesClassicThreads(NB_PARTIES, model1, model2, nbThreads, false);
                 classicTimes[test] = (System.nanoTime() - startTime) / 1_000_000;
 
-                System.out.printf("  Test %d/%d: ExecutorService=%d ms, Classic Threads=%d ms\n", 
-                    test + 1, NB_TESTS, executorTimes[test], classicTimes[test]);
-                
+                System.out.printf("  Test %d/%d: ExecutorService=%d ms, Classic Threads=%d ms\n",
+                        test + 1, NB_TESTS, executorTimes[test], classicTimes[test]);
+
                 try {
                     Thread.sleep(2000);
                 } catch (InterruptedException e) {
@@ -114,8 +116,8 @@ public class MultiTacheExp {
             long avgClassic = sumClassic / NB_TESTS;
 
             try (FileWriter writer = new FileWriter(RESULTS_PATH, true)) {
-                writer.write(String.format("%d,%d,%d,%d\n", 
-                    nbThreads, NB_PARTIES, avgExecutor, avgClassic));
+                writer.write(String.format("%d,%d,%d,%d\n",
+                        nbThreads, NB_PARTIES, avgExecutor, avgClassic));
             } catch (IOException e) {
                 System.err.println("Erreur lors de l'écriture des résultats: " + e.getMessage());
             }

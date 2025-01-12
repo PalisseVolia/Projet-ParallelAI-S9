@@ -1,6 +1,6 @@
 package com.parallelai.game;
 
-/** 
+/**
  * Représente un coup dans le jeu d'Othello.
  * Cette classe encapsule :
  * - La position du coup (ligne et colonne)
@@ -11,18 +11,18 @@ package com.parallelai.game;
 public class Move {
     /** Numéro de ligne où placer le pion (0-7) */
     public final int row;
-    
+
     /** Numéro de colonne où placer le pion (0-7) */
     public final int col;
-    
+
     /** Couleur du pion à placer (NOIR ou BLANC) */
     public final Disc color;
 
     /**
      * Crée un nouveau coup avec une position et une couleur.
      * 
-     * @param row Numéro de ligne (0-7)
-     * @param col Numéro de colonne (0-7) 
+     * @param row   Numéro de ligne (0-7)
+     * @param col   Numéro de colonne (0-7)
      * @param color Couleur du pion à placer
      */
     public Move(int row, int col, Disc color) {

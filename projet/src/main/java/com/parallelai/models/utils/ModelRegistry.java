@@ -11,8 +11,10 @@ import java.io.File;
 
 /**
  * Registre pour gérer et fournir l'accès aux modèles d'IA.
- * Cette classe maintient une liste des modèles d'IA disponibles et fournit des méthodes
- * pour enregistrer de nouveaux modèles et créer des instances des modèles existants.
+ * Cette classe maintient une liste des modèles d'IA disponibles et fournit des
+ * méthodes
+ * pour enregistrer de nouveaux modèles et créer des instances des modèles
+ * existants.
  */
 public class ModelRegistry {
     /** Liste de tous les modèles d'IA enregistrés */
@@ -28,7 +30,8 @@ public class ModelRegistry {
 
     /**
      * Enregistre un nouveau modèle d'IA dans le registre
-     * @param name Le nom d'affichage du modèle
+     * 
+     * @param name     Le nom d'affichage du modèle
      * @param supplier Une fonction qui crée une nouvelle instance du modèle
      */
     public static void registerModel(String name, ModelSupplier supplier) {
@@ -37,6 +40,7 @@ public class ModelRegistry {
 
     /**
      * Retourne la liste de tous les modèles d'IA disponibles
+     * 
      * @return Liste des modèles d'IA enregistrés
      */
     public static List<ModelInfo> getAvailableModels() {
@@ -45,6 +49,7 @@ public class ModelRegistry {
 
     /**
      * Crée une nouvelle instance d'un modèle à l'index spécifié
+     * 
      * @param index L'index du modèle dans le registre
      * @return Une nouvelle instance du modèle demandé
      */
@@ -72,7 +77,8 @@ public class ModelRegistry {
 
         /**
          * Crée un nouveau ModelInfo
-         * @param name Nom d'affichage du modèle
+         * 
+         * @param name     Nom d'affichage du modèle
          * @param supplier Fonction pour créer des instances du modèle
          */
         ModelInfo(String name, ModelSupplier supplier) {
@@ -83,12 +89,13 @@ public class ModelRegistry {
 
     /**
      * Initialise un modèle depuis la base de données
+     * 
      * @param modelType Le type de modèle à initialiser (CNN ou MLP)
      */
     public static void initializeModelFromDatabase(String modelType) {
         int dbType = modelType.equals("CNN") ? 1 : 2;
         String[] availableModels = FileDatabaseManager.getFileList(dbType);
-        
+
         if (availableModels.length == 0) {
             throw new RuntimeException("Aucun modèle " + modelType + " disponible dans la base de données");
         }
@@ -107,13 +114,14 @@ public class ModelRegistry {
 
     /**
      * Initialise un modèle spécifique depuis la base de données
+     * 
      * @param modelType Le type de modèle à initialiser (CNN ou MLP)
      * @param modelName Le nom du modèle à télécharger
      */
     public static void initializeModelFromDatabase(String modelType, String modelName) {
         int dbType = modelType.equals("CNN") ? 1 : 2;
         String[] availableModels = FileDatabaseManager.getFileList(dbType);
-        
+
         // Vérifie si le modèle demandé existe
         boolean modelExists = false;
         for (String model : availableModels) {
@@ -122,7 +130,7 @@ public class ModelRegistry {
                 break;
             }
         }
-        
+
         if (!modelExists) {
             throw new RuntimeException("Le modèle " + modelName + " n'est pas disponible dans la base de données");
         }

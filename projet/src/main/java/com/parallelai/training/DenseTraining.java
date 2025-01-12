@@ -20,106 +20,113 @@ import org.deeplearning4j.util.ModelSerializer;
 
 import java.io.*;
 
+/**
+ * Implémentation d'un réseau de neurones dense pour l'entraînement sur des
+ * données de jeu d'othello.
+ * Cette classe utilise une architecture de réseau de neurones multicouches
+ * entièrement connectée
+ * pour évaluer des situations de jeu d'othello et prédire la probabilité de
+ * victoire pour le joueur
+ */
 public class DenseTraining {
+    /** Taille du plateau (8x8) */
     private static final int BOARD_SIZE = 8;
+    /** Nombre total d'entrées (64 cases) */
     private static final int INPUT_SIZE = BOARD_SIZE * BOARD_SIZE;
-    
+
+    /**
+     * Entraîne un réseau de neurones dense sur un jeu de données d'othello.
+     * 
+     * @param datasetPath Chemin vers le fichier de données d'entraînement
+     * @param modelName   Nom du modèle à entraîner
+     * @param batchSize   Taille des lots pour l'entraînement
+     * @param nEpochs     Nombre d'epoch d'entraînement
+     * @return TrainerResult() contenant le meilleur modèle et ses métriques
+     *         d'évaluation
+     * @throws IOException En cas d'erreur lors de la lecture/écriture des fichiers
+     */
     public TrainerResult train(String datasetPath, String modelName, int batchSize, int nEpochs) throws IOException {
-        // Load and prepare data
+        // Chargement et préparation des données, 80% du dataset pour l'entraînement et
+        // 20% pour l'évaluation
         DatasetImporter importer = new DatasetImporter();
-        // Split dataset into training (80%) and validation (20%) sets
-        DataSetIterator fullIterator = importer.importDataset(datasetPath, batchSize);
-        
-        // Calculate total samples and split sizes
-        int totalSamples = 0;
-        while (fullIterator.hasNext()) {
-            fullIterator.next();
-            totalSamples += batchSize;
-        }
-        fullIterator.reset();
-        
-        int trainSize = (int) (totalSamples * 0.8);
-        int evalSize = totalSamples - trainSize;
-        
-        DataSetIterator[] iterators = importer.splitDataset(datasetPath, batchSize, trainSize, evalSize);
+        DataSetIterator[] iterators = importer.splitDataset(datasetPath, batchSize, 0.8);
         DataSetIterator trainIterator = iterators[0];
         DataSetIterator evalIterator = iterators[1];
-        
-        // Configure network
+
+        // Configuration du réseau de neurones
         MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()
-            .seed(123)
-            .weightInit(WeightInit.XAVIER)
-            .updater(new Adam(0.001))
-            .list()
-            .layer(new DenseLayer.Builder()
-                .nIn(INPUT_SIZE)
-                .nOut(256)
-                .activation(Activation.RELU)
-                .build())
-            .layer(new DenseLayer.Builder()
-                .nOut(128)
-                .activation(Activation.RELU)
-                .build())
-            .layer(new DenseLayer.Builder()
-                .nOut(64)
-                .activation(Activation.RELU)
-                .build())
-            .layer(new OutputLayer.Builder()
-                .nOut(1)
-                .activation(Activation.SIGMOID)
-                .lossFunction(org.nd4j.linalg.lossfunctions.LossFunctions.LossFunction.MSE)
-                .build())
-            .setInputType(InputType.convolutional(BOARD_SIZE, BOARD_SIZE, 1))
-            .build();
+                .seed(123)
+                .weightInit(WeightInit.XAVIER)
+                .updater(new Adam(0.001))
+                .list()
+                .layer(new DenseLayer.Builder()
+                        .nIn(INPUT_SIZE)
+                        .nOut(256)
+                        .activation(Activation.RELU)
+                        .build())
+                .layer(new DenseLayer.Builder()
+                        .nOut(128)
+                        .activation(Activation.RELU)
+                        .build())
+                .layer(new DenseLayer.Builder()
+                        .nOut(64)
+                        .activation(Activation.RELU)
+                        .build())
+                .layer(new OutputLayer.Builder()
+                        .nOut(1)
+                        .activation(Activation.SIGMOID)
+                        .lossFunction(org.nd4j.linalg.lossfunctions.LossFunctions.LossFunction.MSE)
+                        .build())
+                .setInputType(InputType.convolutional(BOARD_SIZE, BOARD_SIZE, 1))
+                .build();
 
         MultiLayerNetwork model = new MultiLayerNetwork(conf);
         model.init();
 
-        // Add listeners for metrics
+        // Ajout de listeners pour les métriques
         model.setListeners(new TrainerMetrics(nEpochs), new ScoreIterationListener(10));
 
-        // Train model with evaluation after each epoch
-        System.out.println("Starting training...");
+        // Entraine le modèle avec évaluation après chaque époque
+        System.out.println("Début de l'entraînement...");
         RegressionEvaluation finalEval = null;
         double bestMSE = Double.MAX_VALUE;
         MultiLayerNetwork bestModel = null;
-        
+
         for (int i = 0; i < nEpochs; i++) {
             model.fit(trainIterator);
-            
-            // Evaluate model
+
+            // Evalue le modèle
             RegressionEvaluation eval = new RegressionEvaluation(1);
-            
+
             while (evalIterator.hasNext()) {
                 DataSet ds = evalIterator.next();
                 eval.eval(ds.getLabels(), model.output(ds.getFeatures()));
             }
-            
-            // Check if current model is better
+
+            // Vérifie si le modèle actuel est meilleur que celui de l'epoch précédente
             double currentMSE = eval.meanSquaredError(0);
             if (currentMSE < bestMSE) {
                 bestMSE = currentMSE;
-                // Save the best model
+                // Sauvegarde le meilleur modèle
                 File tempFile = File.createTempFile("bestmodel", "tmp");
                 ModelSerializer.writeModel(model, tempFile, true);
                 bestModel = ModelSerializer.restoreMultiLayerNetwork(tempFile);
                 tempFile.delete();
                 finalEval = eval;
             }
-            
-            // Print metrics
+
+            // Affiche les métriques
             System.out.println(String.format("Epoch %d/%d", (i + 1), nEpochs));
             System.out.println("MSE: " + eval.meanSquaredError(0));
             System.out.println("RMSE: " + eval.rootMeanSquaredError(0));
             System.out.println("R²: " + eval.rSquared(0));
             System.out.println("--------------------");
-            
-            // Reset iterators
+
             trainIterator.reset();
             evalIterator.reset();
         }
 
-        // Return best model and its evaluation
+        // Return le meilleur modèle et son évaluation
         return new TrainerResult(bestModel, finalEval);
     }
 }

@@ -13,7 +13,7 @@ public class TrainerResult {
     /**
      * Constructeur pour les résultats d'entraînement.
      * 
-     * @param model Le modèle entraîné
+     * @param model      Le modèle entraîné
      * @param evaluation L'évaluation des performances du modèle
      */
     public TrainerResult(MultiLayerNetwork model, RegressionEvaluation evaluation) {
