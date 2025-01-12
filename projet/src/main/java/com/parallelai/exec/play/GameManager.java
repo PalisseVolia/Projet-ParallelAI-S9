@@ -25,13 +25,14 @@ import java.io.IOException;
  * - Le suivi des statistiques de jeu
  */
 public class GameManager {
-    // Énumération des modes de jeu pour un code plus propre
+    // Énumération des modes de jeu
     private enum GameMode { 
-        HUMAN_VS_HUMAN,    // Mode joueur contre joueur
-        HUMAN_VS_AI,       // Mode joueur contre IA
-        AI_VS_AI          // Mode IA contre IA
+        HUMAN_VS_HUMAN,     // Mode joueur contre joueur
+        HUMAN_VS_AI,        // Mode joueur contre IA
+        AI_VS_AI            // Mode IA contre IA
     }
 
+    // arguments généraux
     private final Scanner scanner;
     private final Board board;
     private Player player1;
@@ -87,7 +88,7 @@ public class GameManager {
      * @param p1 Joueur IA pondéré noir
      * @param p2 Joueur IA pondéré blanc
      */
-    public GameManager(Board board, AIWeightedPlayer p1, AIWeightedPlayer p2) {
+    public GameManager(Board board, AIWeightedPlayer p1, AIWeightedPlayer p2) { // TODO : maybe unused
         this.scanner = new Scanner(System.in);
         this.board = board;
         this.player1 = p1;
@@ -143,7 +144,6 @@ public class GameManager {
                 player2 = new AIPlayer(Disc.WHITE, aiModel);
                 break;
             case AI_VS_AI:
-                // Players will be set up in handleAIGame()
                 handleAIGame();
                 break;
         }
@@ -162,7 +162,7 @@ public class GameManager {
         Model model1 = selectAIModel("Sélectionnez le modèle d'IA pour le joueur noir");
         Model model2 = selectAIModel("Sélectionnez le modèle d'IA pour le joueur blanc");
         
-        // Create players with the selected models and AI type
+        // Crée les joueurs IA en fonction du type sélectionné et du modèle
         if (aiType == AIType.REGULAR) {
             player1 = new AIPlayer(Disc.BLACK, model1);
             player2 = new AIPlayer(Disc.WHITE, model2);
@@ -173,7 +173,7 @@ public class GameManager {
         currentPlayer = player1;
         
         System.out.println("Voulez-vous sauvegarder les parties ? (y/n)");
-        scanner.nextLine(); // Consume leftover newline
+        scanner.nextLine();
         String choice = scanner.nextLine().toLowerCase();
 
         if (choice.equals("y")) {

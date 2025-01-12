@@ -3,6 +3,7 @@ package com.parallelai.exec.app;
 import com.parallelai.exec.train.TrainerManager;
 import com.parallelai.exec.files.FilesManager;
 import com.parallelai.exec.play.GameManager;
+import com.parallelai.exec.files.FilesUtils;
 import java.util.Scanner;
 
 /**
@@ -18,9 +19,15 @@ public class AppManager {
     /**
      * Constructeur du gestionnaire d'application
      * Initialise le scanner pour la saisie utilisateur
+     * et nettoie les répertoires des modèles d'IA
      */
     public AppManager() {
         this.scanner = new Scanner(System.in);
+        try {
+            FilesUtils.clearModelDirectories();
+        } catch (Exception e) {
+            System.out.println("Erreur lors de la suppression des fichiers de modèles.");
+        }
     }
     
     /**
@@ -44,7 +51,7 @@ public class AppManager {
                     break;
                     
                 case 3:
-                    System.out.println("\n=== Gestionnaire de Fichiers ===");
+                    System.out.println("\n=== Suppression de Fichiers ===");
                     new FilesManager().startFileManager();
                     break;
                     
@@ -65,9 +72,9 @@ public class AppManager {
      */
     private void displayMainMenu() {
         System.out.println("\n=== Application Othello AI ===");
-        System.out.println("1. Jouer une partie");
+        System.out.println("1. Jouer une ou des partie");
         System.out.println("2. Entraîner un modèle");
-        System.out.println("3. Gérer les fichiers");
+        System.out.println("3. Supprimer des fichiers");
         System.out.println("4. Quitter");
         System.out.print("Entrez votre choix (1-4) : ");
     }
