@@ -6,6 +6,7 @@ import com.parallelai.models.utils.Model;
 import com.parallelai.players.AIPlayer;
 import com.parallelai.players.AIWeightedPlayer;
 import com.parallelai.game.Disc;
+import com.parallelai.exec.files.FilesUtils;
 import com.parallelai.exec.play.GameRunner.AIType;
 
 import java.io.File;
@@ -88,6 +89,7 @@ public class DataSetManager {
         try {
             if (new File(fullPath).delete()) {
                 System.out.println("Fichier local nettoyé avec succès.");
+                FilesUtils.clearModelDirectories();
             }
         } catch (Exception e) {
             System.err.println("Attention : Impossible de supprimer le fichier local : " + e.getMessage());

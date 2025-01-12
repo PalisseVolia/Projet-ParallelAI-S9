@@ -157,15 +157,15 @@ public class FileDatabaseManager {
             String sql = "DELETE FROM dataSet WHERE file_name = ?"; // SQL statement for deletion
 
             try (
-                    // Establish database connection
+                    // Établir la connexion à la base de données
                     Connection connection = DriverManager.getConnection(URL, USER, PASSWORD);
-                    // Prepare the DELETE SQL statement
+                    // Préparer la requête SQL DELETE
                     PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
 
-                // Set the file name parameter in the DELETE statement
+                // Définir le paramètre du nom de fichier dans la requête DELETE
                 preparedStatement.setString(1, new File(filePath).getName());
 
-                // Execute the DELETE query
+                // Exécuter la requête DELETE
                 int rowsAffected = preparedStatement.executeUpdate();
 
                 if (rowsAffected > 0) {
@@ -178,19 +178,19 @@ public class FileDatabaseManager {
                 e.printStackTrace();
             }
         } else {
-            String sql = "DELETE FROM model WHERE file_name = ? AND model_type = ?"; // SQL statement for deletion
+            String sql = "DELETE FROM model WHERE file_name = ? AND model_type = ?"; // Requête SQL pour la suppression
 
             try (
-                    // Establish database connection
+                    // Établir la connexion à la base de données
                     Connection connection = DriverManager.getConnection(URL, USER, PASSWORD);
-                    // Prepare the DELETE SQL statement
+                    // Préparer la requête SQL DELETE
                     PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
 
-                // Set the file name parameter in the DELETE statement
+                // Définir les paramètres du nom de fichier dans la requête DELETE
                 preparedStatement.setString(1, new File(filePath).getName());
                 preparedStatement.setString(2, type == 1 ? "CNN" : "MLP");
 
-                // Execute the DELETE query
+                // Exécuter la requête DELETE
                 int rowsAffected = preparedStatement.executeUpdate();
 
                 if (rowsAffected > 0) {

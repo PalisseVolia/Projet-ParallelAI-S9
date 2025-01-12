@@ -6,3 +6,4 @@ projet/target/classes/com/parallelai/players/AIPlayer.class
 *.class
 projet/target/classes/com/parallelai/exec/play/GameManager.class
 projet/target/classes/com/parallelai/export/GameStateExporter.class
+projet/target/classes/com/parallelai/export/implementations/ClassicThreadExporter.class

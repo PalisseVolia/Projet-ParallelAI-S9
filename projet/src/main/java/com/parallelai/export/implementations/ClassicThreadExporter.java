@@ -416,7 +416,7 @@ public class ClassicThreadExporter extends GameStateExporter {
                 List<GameState> batchBuffer = new ArrayList<>(BATCH_SIZE);                
                 for (int game = 0; game < partiesForThisThread; game++) {
                     Board board = new Board();
-                    GameManager gameManager = new GameManager(board, player1.model, player2.model);
+                    GameManager gameManager = new GameManager(board, player1, player2);
                     List<CompressedState> history = new ArrayList<>();
 
                     while (gameManager.playNextMove()) {
