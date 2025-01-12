@@ -502,7 +502,7 @@ public class ClassicThreadExporter extends GameStateExporter {
         // Paramètres de test
         int nbParties = 100;
         int nbThreads = Runtime.getRuntime().availableProcessors();
-        String outputPath = "test_dataset.csv";
+        String outputPath = "test_dataset_classic.csv";
         
         // Création des modèles pour le test
         Model model1 = new RandomModel();
