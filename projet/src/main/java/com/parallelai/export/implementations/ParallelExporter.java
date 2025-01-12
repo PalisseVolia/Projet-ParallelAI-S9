@@ -227,8 +227,6 @@ public class ParallelExporter extends GameStateExporter {
         private final Map<String, double[]> stateMap;
         private final StateBuffer stateBuffer;
         private static final int BATCH_SIZE = 5000; // Augmenté pour réduire les synchronisations
-        @SuppressWarnings("unused")
-        private Map<String, double[]> localCache;
 
         public GameThreadNoSync(int nbParties, Model model1, Model model2, ProgressBar progressBar) {
             this.nbParties = nbParties;
@@ -237,7 +235,6 @@ public class ParallelExporter extends GameStateExporter {
             this.progressBar = progressBar;
             this.stateMap = new HashMap<>(nbParties * 10); // Préallocation plus grande
             this.stateBuffer = new StateBuffer();
-            this.localCache = new HashMap<>(BATCH_SIZE * 100); // Pré-allouer une grande taille
         }
 
         public void execute() {

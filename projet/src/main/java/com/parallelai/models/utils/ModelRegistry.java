@@ -17,12 +17,13 @@ import java.io.File;
 public class ModelRegistry {
     /** Liste de tous les modèles d'IA enregistrés */
     private static final List<ModelInfo> availableModels = new ArrayList<>();
+    private static String modelName;
 
     static {
         // Enregistrement de tous les modèles disponibles
         registerModel("Random", () -> new RandomModel());
-        registerModel("CNN", () -> new CnnModel());
-        registerModel("Dense", () -> new DenseModel());
+        registerModel("CNN", () -> new CnnModel(modelName));
+        registerModel("Dense", () -> new DenseModel(modelName));
     }
 
     /**
@@ -47,7 +48,8 @@ public class ModelRegistry {
      * @param index L'index du modèle dans le registre
      * @return Une nouvelle instance du modèle demandé
      */
-    public static Model createModel(int index) {
+    public static Model createModel(int index, String modelName) {
+        ModelRegistry.modelName = modelName;
         return availableModels.get(index).supplier.get();
     }
 
@@ -101,5 +103,37 @@ public class ModelRegistry {
 
         // Télécharge le modèle sélectionné
         FileDatabaseManager.downloadFile(selectedModel, dbType);
+    }
+
+    /**
+     * Initialise un modèle spécifique depuis la base de données
+     * @param modelType Le type de modèle à initialiser (CNN ou MLP)
+     * @param modelName Le nom du modèle à télécharger
+     */
+    public static void initializeModelFromDatabase(String modelType, String modelName) {
+        int dbType = modelType.equals("CNN") ? 1 : 2;
+        String[] availableModels = FileDatabaseManager.getFileList(dbType);
+        
+        // Vérifie si le modèle demandé existe
+        boolean modelExists = false;
+        for (String model : availableModels) {
+            if (model.equals(modelName)) {
+                modelExists = true;
+                break;
+            }
+        }
+        
+        if (!modelExists) {
+            throw new RuntimeException("Le modèle " + modelName + " n'est pas disponible dans la base de données");
+        }
+
+        String targetPath = String.format("projet\\src\\main\\ressources\\models\\%s\\%s",
+                modelType, modelName);
+
+        // Assure que le répertoire cible existe
+        new File(targetPath).getParentFile().mkdirs();
+
+        // Télécharge le modèle sélectionné
+        FileDatabaseManager.downloadFile(modelName, dbType);
     }
 }

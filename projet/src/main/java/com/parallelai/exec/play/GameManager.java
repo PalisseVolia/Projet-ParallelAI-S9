@@ -157,7 +157,7 @@ public class GameManager {
         System.out.println("Entrez le nombre de parties (1 pour une seule partie) :");
         int numGames = scanner.nextInt();
         totalGames = numGames;
-
+        
         Model model1 = selectAIModel("Sélectionnez le modèle d'IA pour le joueur noir");
         Model model2 = selectAIModel("Sélectionnez le modèle d'IA pour le joueur blanc");
         
@@ -170,9 +170,17 @@ public class GameManager {
             player2 = new AIWeightedPlayer(Disc.WHITE, model2);
         }
         currentPlayer = player1;
+        
+        System.out.println("Voulez-vous sauvegarder les parties ? (y/n)");
+        scanner.nextLine(); // Consume leftover newline
+        String choice = scanner.nextLine().toLowerCase();
 
-        DataSetManager manager = new DataSetManager(model1, model2, totalGames, aiType);
-        manager.initialize();
+        if (choice.equals("y")) {
+            DataSetManager manager = new DataSetManager(model1, model2, totalGames, aiType);
+            manager.initializeDatasetOptions();
+        } else {
+            runMultipleGames(numGames, model1, model2, aiType);
+        }
     }
 
     /**
@@ -194,7 +202,6 @@ public class GameManager {
      * @param model2 Deuxième modèle d'IA
      * @param aiType Type d'IA à utiliser
      */
-    @SuppressWarnings("unused")
     private void runMultipleGames(int numGames, Model model1, Model model2, AIType aiType) {
         model1Name = model1.getName();
         model2Name = model2.getName();
@@ -270,41 +277,49 @@ public class GameManager {
      */
     private Model selectAIModel(String prompt) {
         List<ModelRegistry.ModelInfo> models = ModelRegistry.getAvailableModels();
-        System.out.println(prompt + " :");
+        System.out.println(prompt + ":");
         
-        // Afficher les types de modèles disponibles
+        // Display available model types
         for (int i = 0; i < models.size(); i++) {
             System.out.println((i + 1) + ". " + models.get(i).name);
         }
         
         int modelTypeChoice = scanner.nextInt();
         if (modelTypeChoice < 1 || modelTypeChoice > models.size()) {
-            throw new IllegalArgumentException("Choix de modèle invalide");
+            throw new IllegalArgumentException("Invalid model type choice");
         }
 
-        
+        // Get model type
         String modelType = models.get(modelTypeChoice - 1).name;
+        
+        // Skip database selection for Random model
+        if (modelType.equals("Random")) {
+            return ModelRegistry.createModel(modelTypeChoice - 1, "random");
+        }
+
+        // For CNN and Dense models, select from database
         int dbType = modelType.equals("CNN") ? 1 : 2;
 
-        // Afficher les modèles disponibles
+        // Display available models from database
         String[] availableModels = FileDatabaseManager.getFileList(dbType);
         if (availableModels.length == 0) {
-            throw new RuntimeException("Aucun modèle " + modelType + " disponible dans la base de données");
+            throw new RuntimeException("No " + modelType + " models available in the database");
         }
 
-        System.out.println("\nModèles " + modelType + " disponibles :");
+        System.out.println("\nAvailable " + modelType + " models:");
         for (int i = 0; i < availableModels.length; i++) {
             System.out.println((i + 1) + ". " + availableModels[i]);
         }
 
         // Get model choice
-        System.out.println("Sélectionnez un modèle (1-" + availableModels.length + ") :");
+        System.out.println("Select a model (1-" + availableModels.length + "):");
         int modelChoice = scanner.nextInt();
         if (modelChoice < 1 || modelChoice > availableModels.length) {
-            throw new IllegalArgumentException("Choix de modèle invalide");
+            throw new IllegalArgumentException("Invalid model choice");
         }
 
-        return ModelRegistry.createModel(modelTypeChoice - 1);
+        String selectedModelName = availableModels[modelChoice - 1];
+        return ModelRegistry.createModel(modelTypeChoice - 1, selectedModelName);
     }
 
     /**
@@ -437,3 +452,4 @@ public class GameManager {
         game.initialize();
     }
 }
+

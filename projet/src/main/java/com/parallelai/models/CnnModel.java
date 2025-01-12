@@ -19,15 +19,15 @@ import java.io.IOException;
 public class CnnModel implements Model {
     private MultiLayerNetwork network;
     private static final int BOARD_SIZE = 8;
-    private static final String MODEL_PATH = "projet\\src\\main\\ressources\\models\\CNN\\othello_cnn_model.zip";
+    private static final String MODEL_PATH = "projet\\src\\main\\ressources\\models\\CNN\\";
 
     /**
      * Initialise le modèle CNN en chargeant le réseau de neurones pré-entraîné.
      */
-    public CnnModel() {
+    public CnnModel(String modelName) {
         try {
-            ModelRegistry.initializeModelFromDatabase("CNN");
-            File modelFile = new File(MODEL_PATH);
+            ModelRegistry.initializeModelFromDatabase("CNN", modelName);
+            File modelFile = new File(MODEL_PATH+modelName);
             if (!modelFile.exists()) {
                 throw new IOException("Fichier modèle non trouvé à l'emplacement : " + modelFile.getAbsolutePath());
             }

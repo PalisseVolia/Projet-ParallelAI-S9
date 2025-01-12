@@ -45,7 +45,7 @@ public class MultiTacheExp_1vs8 {
                     
                     // Mesure du temps d'exécution
                     long startTime = System.currentTimeMillis();
-                    exporter.startGamesNoSave(parties, model1, model2, threads);
+                    exporter.startGamesWithUniqueStatesClassicThreads(parties, model1, model2, threads, false);
                     long endTime = System.currentTimeMillis();
                     
                     // Calcul et enregistrement du temps d'exécution

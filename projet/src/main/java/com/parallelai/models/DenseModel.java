@@ -20,15 +20,15 @@ public class DenseModel implements Model {
     private MultiLayerNetwork network;
     private static final int BOARD_SIZE = 8;
     private static final int INPUT_SIZE = BOARD_SIZE * BOARD_SIZE;
-    private static final String MODEL_PATH = "projet\\src\\main\\ressources\\models\\MLP\\othello_dense_model.zip";
+    private static final String MODEL_PATH = "projet\\src\\main\\ressources\\models\\MLP\\";
 
     /**
      * Initialise le modèle dense en chargeant le réseau de neurones pré-entraîné.
      */
-    public DenseModel() {
+    public DenseModel(String modelName) {
         try {
-            ModelRegistry.initializeModelFromDatabase("MLP");
-            File modelFile = new File(MODEL_PATH);
+            ModelRegistry.initializeModelFromDatabase("MLP", modelName);
+            File modelFile = new File(MODEL_PATH+modelName);
             if (!modelFile.exists()) {
                 throw new IOException("Fichier modèle non trouvé à l'emplacement : " + modelFile.getAbsolutePath());
             }

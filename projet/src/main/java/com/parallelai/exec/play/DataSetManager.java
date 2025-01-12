@@ -2,22 +2,15 @@ package com.parallelai.exec.play;
 
 import com.parallelai.database.FileDatabaseManager;
 import com.parallelai.export.implementations.ClassicThreadExporter;
-import com.parallelai.models.RandomModel;
 import com.parallelai.models.utils.Model;
-import com.parallelai.models.utils.ModelRegistry;
 import com.parallelai.players.AIPlayer;
 import com.parallelai.players.AIWeightedPlayer;
 import com.parallelai.game.Disc;
-import com.parallelai.game.Player;
 import com.parallelai.exec.play.GameRunner.AIType;
 
-import javax.swing.JFileChooser;
-import javax.swing.SwingUtilities;
 import java.io.File;
-import java.util.List;
 import java.util.Scanner;
 
-@SuppressWarnings("unused")
 /**
  * Gestionnaire de jeux de données pour l'apprentissage des modèles.
  * Permet de jouer des parties et optionnellement les sauvegarder dans des jeux de données.
@@ -30,8 +23,6 @@ public class DataSetManager {
     private final Model model2;
     private final int nbParties;
     private final AIType aiType;
-    private final Player player1;
-    private final Player player2;
 
     /**
      * Constructeur avec les paramètres nécessaires
@@ -42,56 +33,12 @@ public class DataSetManager {
         this.model2 = model2;
         this.nbParties = nbParties;
         this.aiType = aiType;
-        
-        // Création des players selon le type d'AI
-        if (aiType == AIType.WEIGHTED) {
-            this.player1 = new AIWeightedPlayer(Disc.BLACK, model1);
-            this.player2 = new AIWeightedPlayer(Disc.WHITE, model2);
-        } else {
-            this.player1 = new AIPlayer(Disc.BLACK, model1);
-            this.player2 = new AIPlayer(Disc.WHITE, model2);
-        }
-    }
-
-    /**
-     * méthode d'initialisation qui demande d'abord si on veut sauvegarder
-     */
-    public void initialize() {
-        System.out.println("\n=== Gestionnaire de Parties ===");
-        System.out.println("Voulez-vous sauvegarder les parties ? (o/n)");
-        String choice = scanner.nextLine().toLowerCase();
-
-        if (choice.equals("o")) {
-            initializeDatasetOptions();
-        } else {
-            playGamesWithoutSaving();
-        }
-    }
-
-    /**
-     * Joue les parties sans sauvegarde
-     */
-    private void playGamesWithoutSaving() {
-        System.out.println("\nJeu de " + nbParties + " parties en cours...");
-        // Utiliser les Players directement sans sauvegarder
-        ClassicThreadExporter exporter = new ClassicThreadExporter(null);
-        int nbThreads = Runtime.getRuntime().availableProcessors();
-        if (aiType == AIType.REGULAR) {
-            AIPlayer p1 = new AIPlayer(Disc.BLACK, model1);
-            AIPlayer p2 = new AIPlayer(Disc.WHITE, model2);
-            exporter.startGamesNoSave(nbParties, p1, p2, nbThreads);
-        } else {
-            AIWeightedPlayer p1 = new AIWeightedPlayer(Disc.BLACK, model1);
-            AIWeightedPlayer p2 = new AIWeightedPlayer(Disc.WHITE, model2);
-            exporter.startGamesNoSave(nbParties, p1, p2, nbThreads);
-        }
-        System.out.println("Parties terminées !");
     }
 
     /**
      * Initialize les options de dataset quand on veut sauvegarder
      */
-    private void initializeDatasetOptions() {
+    public void initializeDatasetOptions() {
         System.out.println("\n=== Options du Jeu de Données ===");
         System.out.println("1. Créer un nouveau jeu de données");
         System.out.println("2. Ajouter à un jeu de données existant");
@@ -233,63 +180,5 @@ public class DataSetManager {
             
             System.out.println("Sélection invalide. Veuillez réessayer.");
         }
-    }
-
-    /**
-     * Permet de télécharger un dataset existant vers un emplacement choisi par l'utilisateur
-     * Utilise une interface graphique pour sélectionner l'emplacement de sauvegarde
-     */
-    private void downloadDataset() {
-        String selectedDataset = selectExistingDataset();
-        if (selectedDataset == null) {
-            return;
-        }
-
-        System.out.println("Jeu de données sélectionné : " + selectedDataset);
-
-        try {
-            // Créer et configurer le JFileChooser
-            JFileChooser fileChooser = new JFileChooser();
-            fileChooser.setDialogTitle("Choisissez où sauvegarder le jeu de données");
-            fileChooser.setSelectedFile(new File(selectedDataset));
-            
-            // Créer une fenêtre parent invisible pour le dialog
-            javax.swing.JFrame frame = new javax.swing.JFrame();
-            frame.setAlwaysOnTop(true);
-            
-            // Afficher le dialog et attendre la sélection
-            int result = fileChooser.showSaveDialog(frame);
-            frame.dispose();
-            
-            if (result == JFileChooser.APPROVE_OPTION) {
-                String savePath = fileChooser.getSelectedFile().getAbsolutePath();
-                
-                // Ajouter l'extension .csv si nécessaire
-                if (!savePath.toLowerCase().endsWith(".csv")) {
-                    savePath += ".csv";
-                }
-                
-                System.out.println("Téléchargement du jeu de données vers : " + savePath);
-                FileDatabaseManager.downloadFile(selectedDataset, savePath, 3);
-                System.out.println("Téléchargement terminé !");
-            } else {
-                System.out.println("Téléchargement annulé.");
-            }
-        } catch (Exception e) {
-            System.err.println("Erreur lors de la sélection du fichier : " + e.getMessage());
-        }
-    }
-
-    /**
-     * Affiche la liste des modèles disponibles et permet à l'utilisateur d'en sélectionner un
-     * @return Le modèle sélectionné
-     */
-    private Model selectModel() {
-        List<ModelRegistry.ModelInfo> models = ModelRegistry.getAvailableModels();
-        for (int i = 0; i < models.size(); i++) {
-            System.out.println((i + 1) + ". " + models.get(i).name);
-        }
-        int modelChoice = scanner.nextInt();
-        return ModelRegistry.createModel(modelChoice - 1);
     }
 }
