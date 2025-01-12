@@ -278,45 +278,45 @@ public class GameManager {
      */
     private Model selectAIModel(String prompt) {
         List<ModelRegistry.ModelInfo> models = ModelRegistry.getAvailableModels();
-        System.out.println(prompt + ":");
+        System.out.println(prompt + " :");
         
-        // Display available model types
+        // Affiche les types de modèles disponibles
         for (int i = 0; i < models.size(); i++) {
             System.out.println((i + 1) + ". " + models.get(i).name);
         }
         
         int modelTypeChoice = scanner.nextInt();
         if (modelTypeChoice < 1 || modelTypeChoice > models.size()) {
-            throw new IllegalArgumentException("Invalid model type choice");
+            throw new IllegalArgumentException("Choix de type de modèle invalide");
         }
 
-        // Get model type
+        // Récupère le type de modèle
         String modelType = models.get(modelTypeChoice - 1).name;
         
-        // Skip database selection for Random model
+        // Passe la sélection de base de données pour le modèle Aléatoire
         if (modelType.equals("Random")) {
             return ModelRegistry.createModel(modelTypeChoice - 1, "random");
         }
 
-        // For CNN and Dense models, select from database
+        // Pour les modèles CNN et Dense, sélection depuis la base de données
         int dbType = modelType.equals("CNN") ? 1 : 2;
 
-        // Display available models from database
+        // Affiche les modèles disponibles dans la base de données
         String[] availableModels = FileDatabaseManager.getFileList(dbType);
         if (availableModels.length == 0) {
-            throw new RuntimeException("No " + modelType + " models available in the database");
+            throw new RuntimeException("Aucun modèle " + modelType + " disponible dans la base de données");
         }
 
-        System.out.println("\nAvailable " + modelType + " models:");
+        System.out.println("\nModèles " + modelType + " disponibles :");
         for (int i = 0; i < availableModels.length; i++) {
             System.out.println((i + 1) + ". " + availableModels[i]);
         }
 
-        // Get model choice
-        System.out.println("Select a model (1-" + availableModels.length + "):");
+        // Obtient le choix du modèle
+        System.out.println("Sélectionnez un modèle (1-" + availableModels.length + ") :");
         int modelChoice = scanner.nextInt();
         if (modelChoice < 1 || modelChoice > availableModels.length) {
-            throw new IllegalArgumentException("Invalid model choice");
+            throw new IllegalArgumentException("Choix de modèle invalide");
         }
 
         String selectedModelName = availableModels[modelChoice - 1];

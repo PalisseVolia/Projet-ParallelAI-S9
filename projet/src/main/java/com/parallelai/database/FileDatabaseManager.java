@@ -14,59 +14,61 @@ import java.util.Scanner;
 import java.nio.file.Paths;
 
 public class FileDatabaseManager {
+    // Paramètres de connexion à la base de données
     private static final String URL = "jdbc:mysql://sql2.minestrator.com:3306/minesr_iVGkRPW9";
     private static final String USER = "minesr_iVGkRPW9";
     private static final String PASSWORD = "53GCC6KpeTZnCHmW";
 
+    // Chemins des différents dossiers de ressources
     private static final String datasetsPath = "projet\\src\\main\\ressources\\data";
     private static final String CnnModelPath = "projet\\src\\main\\ressources\\models\\CNN";
     private static final String MlpModelPath = "projet\\src\\main\\ressources\\models\\MLP";
 
-    // TOOD: delete, juste un exemple pour utiliser les fonctions
+    // Programme principal de test
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
         int type = 0;
 
         while (true) {
-            System.out.println("\nChoose an action:");
-            System.out.println("1. Insert a file into the database");
-            System.out.println("2. Delete a file in the database");
-            System.out.println("3. List all files in the database");
-            System.out.println("4. Download a file from the database");
-            System.out.println("5. Exit");
+            System.out.println("\nChoisissez une action :");
+            System.out.println("1. Insérer un fichier dans la base de données");
+            System.out.println("2. Supprimer un fichier de la base de données");
+            System.out.println("3. Lister tous les fichiers de la base de données");
+            System.out.println("4. Télécharger un fichier depuis la base de données");
+            System.out.println("5. Quitter");
 
             int choice = scanner.nextInt();
             scanner.nextLine();
 
             if (choice != 5) {
-                System.out.println("\nWould you like to manipulate a:");
-                System.out.println("1. CNN Model");
-                System.out.println("2. MLP Model");
-                System.out.println("3. DataSet");
+                System.out.println("\nQuel type de fichier souhaitez-vous manipuler :");
+                System.out.println("1. Modèle CNN");
+                System.out.println("2. Modèle MLP");
+                System.out.println("3. Jeu de données");
                 type = scanner.nextInt();
                 scanner.nextLine();
             }
 
             switch (choice) {
                 case 1:
-                    System.out.print("Enter the file path: ");
+                    System.out.print("Entrez le chemin du fichier : ");
                     String filePath = scanner.nextLine();
                     insertFile(filePath, type);
                     break;
                 case 2:
                     String[] files = getFileList(type);
                     if (files.length == 0) {
-                        System.out.println("No files available to delete.");
+                        System.out.println("Aucun fichier disponible à supprimer.");
                         break;
                     }
-                    System.out.println("Select a file to delete:");
+                    System.out.println("Sélectionnez un fichier à supprimer :");
                     displayNumberedList(files);
                     int fileIndex = scanner.nextInt();
                     scanner.nextLine(); // consume newline
                     if (fileIndex > 0 && fileIndex <= files.length) {
                         deleteFile(files[fileIndex - 1], type);
                     } else {
-                        System.out.println("Invalid selection.");
+                        System.out.println("Sélection invalide.");
                     }
                     break;
                 case 3:
@@ -75,30 +77,30 @@ public class FileDatabaseManager {
                 case 4:
                     String[] downloadFiles = getFileList(type);
                     if (downloadFiles.length == 0) {
-                        System.out.println("No files available to download.");
+                        System.out.println("Aucun fichier disponible à télécharger.");
                         break;
                     }
-                    System.out.println("Select a file to download:");
+                    System.out.println("Sélectionnez un fichier à télécharger :");
                     displayNumberedList(downloadFiles);
                     int downloadIndex = scanner.nextInt();
                     scanner.nextLine();
                     if (downloadIndex > 0 && downloadIndex <= downloadFiles.length) {
                         downloadFile(downloadFiles[downloadIndex - 1], type);
                     } else {
-                        System.out.println("Invalid selection.");
+                        System.out.println("Sélection invalide.");
                     }
                     break;
                 case 5:
-                    System.out.println("Exiting...");
+                    System.out.println("Quitter...");
                     scanner.close();
                     return;
                 default:
-                    System.out.println("Invalid choice. Try again.");
+                    System.out.println("Choix invalide. Réessayez.");
             }
         }
     }
 
-    // Insert a file into the database
+    // Insère un fichier dans la base de données
     public static void insertFile(String filePath, int type) {
         String sql;
         if (type == 3) {
@@ -114,12 +116,12 @@ public class FileDatabaseManager {
 
                 int rowsInserted = preparedStatement.executeUpdate();
                 if (rowsInserted > 0) {
-                    System.out.println("Dataset file inserted successfully!");
+                    System.out.println("Jeu de données inséré avec succès !");
                 } else {
-                    System.out.println("Failed to insert the dataset file.");
+                    System.out.println("Échec de l'insertion du jeu de données.");
                 }
             } catch (SQLException | IOException e) {
-                System.out.println("Error during file insertion:");
+                System.out.println("Erreur lors de l'insertion du fichier :");
                 e.printStackTrace();
             }
         } else {
@@ -135,20 +137,21 @@ public class FileDatabaseManager {
 
                 int rowsInserted = preparedStatement.executeUpdate();
                 if (rowsInserted > 0) {
-                    System.out.println("File inserted successfully!");
+                    System.out.println("Fichier inséré avec succès !");
                 } else {
-                    System.out.println("Failed to insert the file.");
+                    System.out.println("Échec de l'insertion du fichier.");
                 }
             } catch (SQLException e) {
-                System.out.println("Database error:");
+                System.out.println("Erreur de base de données :");
                 e.printStackTrace();
             } catch (IOException e) {
-                System.out.println("File error:");
+                System.out.println("Erreur de fichier :");
                 e.printStackTrace();
             }
         }
     }
 
+    // Supprime un fichier de la base de données
     public static void deleteFile(String filePath, int type) {
         if (type == 3) {
             String sql = "DELETE FROM dataSet WHERE file_name = ?"; // SQL statement for deletion
@@ -166,12 +169,12 @@ public class FileDatabaseManager {
                 int rowsAffected = preparedStatement.executeUpdate();
 
                 if (rowsAffected > 0) {
-                    System.out.println("File deleted from database successfully!");
+                    System.out.println("Fichier supprimé de la base de données avec succès !");
                 } else {
-                    System.out.println("No file found with the given name, deletion failed.");
+                    System.out.println("Aucun fichier trouvé avec ce nom, échec de la suppression.");
                 }
             } catch (SQLException e) {
-                System.out.println("Database error:");
+                System.out.println("Erreur de base de données :");
                 e.printStackTrace();
             }
         } else {
@@ -191,18 +194,18 @@ public class FileDatabaseManager {
                 int rowsAffected = preparedStatement.executeUpdate();
 
                 if (rowsAffected > 0) {
-                    System.out.println("File deleted from database successfully!");
+                    System.out.println("Fichier supprimé de la base de données avec succès !");
                 } else {
-                    System.out.println("No file found with the given name, deletion failed.");
+                    System.out.println("Aucun fichier trouvé avec ce nom, échec de la suppression.");
                 }
             } catch (SQLException e) {
-                System.out.println("Database error:");
+                System.out.println("Erreur de base de données :");
                 e.printStackTrace();
             }
         }
     }
 
-    // List all files in the database
+    // Liste tous les fichiers dans la base de données
     public static void listFiles(int type) {
         if (type == 3) {
             String sql = "SELECT file_name FROM dataSet";
@@ -211,12 +214,12 @@ public class FileDatabaseManager {
                     Connection connection = DriverManager.getConnection(URL, USER, PASSWORD);
                     PreparedStatement preparedStatement = connection.prepareStatement(sql);
                     ResultSet resultSet = preparedStatement.executeQuery()) {
-                System.out.println("Files in the database:");
+                System.out.println("Fichiers dans la base de données :");
                 while (resultSet.next()) {
                     System.out.println("- " + resultSet.getString("file_name"));
                 }
             } catch (SQLException e) {
-                System.out.println("Database error:");
+                System.out.println("Erreur de base de données :");
                 e.printStackTrace();
             }
         } else {
@@ -229,19 +232,19 @@ public class FileDatabaseManager {
                 preparedStatement.setString(1, type == 1 ? "CNN" : "MLP");
                 
                 try (ResultSet resultSet = preparedStatement.executeQuery()) {
-                    System.out.println("Files in the database:");
+                    System.out.println("Fichiers dans la base de données :");
                     while (resultSet.next()) {
                         System.out.println("- " + resultSet.getString("file_name"));
                     }
                 }
             } catch (SQLException e) {
-                System.out.println("Database error:");
+                System.out.println("Erreur de base de données :");
                 e.printStackTrace();
             }
         }
     }
 
-    // Modified download method
+    // Télécharge un fichier depuis la base de données
     public static void downloadFile(String fileName, int type) {
         String destinationPath;
         if (type == 3) {
@@ -279,15 +282,15 @@ public class FileDatabaseManager {
                             while ((bytesRead = inputStream.read(buffer)) != -1) {
                                 outputStream.write(buffer, 0, bytesRead);
                             }
-                            System.out.println("File downloaded successfully to: " + fullPath);
+                            System.out.println("Fichier téléchargé avec succès vers : " + fullPath);
                         }
                     }
                 } else {
-                    System.out.println("File not found in the database.");
+                    System.out.println("Fichier non trouvé dans la base de données.");
                 }
             }
         } catch (SQLException | IOException e) {
-            System.out.println("Error during file download:");
+            System.out.println("Erreur lors du téléchargement du fichier :");
             e.printStackTrace();
         }
     }
@@ -319,15 +322,15 @@ public class FileDatabaseManager {
                             while ((bytesRead = inputStream.read(buffer)) != -1) {
                                 outputStream.write(buffer, 0, bytesRead);
                             }
-                            System.out.println("File downloaded successfully to: " + customPath);
+                            System.out.println("Fichier téléchargé avec succès vers : " + customPath);
                         }
                     }
                 } else {
-                    System.out.println("File not found in the database.");
+                    System.out.println("Fichier non trouvé dans la base de données.");
                 }
             }
         } catch (SQLException | IOException e) {
-            System.out.println("Error during file download:");
+            System.out.println("Erreur lors du téléchargement du fichier :");
             e.printStackTrace();
         }
     }
@@ -351,7 +354,7 @@ public class FileDatabaseManager {
                 }
             }
         } catch (SQLException e) {
-            System.out.println("Database error:");
+            System.out.println("Erreur de base de données :");
             e.printStackTrace();
         }
         return files.toArray(new String[0]);
