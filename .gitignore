@@ -4,3 +4,5 @@
 projet/src/main/ressources/data/game_history.csv
 projet/target/classes/com/parallelai/players/AIPlayer.class
 *.class
+projet/target/classes/com/parallelai/exec/play/GameManager.class
+projet/target/classes/com/parallelai/export/GameStateExporter.class

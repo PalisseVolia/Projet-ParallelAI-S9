@@ -15,6 +15,7 @@ import java.util.LinkedHashMap;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
+import java.util.Arrays;
 
 import com.parallelai.exec.play.GameManager;
 import com.parallelai.export.implementations.ClassicThreadExporter;
@@ -392,16 +393,17 @@ public abstract class GameStateExporter {
             while ((line = reader.readLine()) != null) {
                 String[] parts = line.split(",");
                 if (parts.length >= 67) {
+                    byte[] byteArray = new byte[64];
+                    for (int i = 0; i < 64; i++) {
+                        byteArray[i] = Byte.parseByte(parts[i]);
+                    }
+                    CompressedState state = new CompressedState(byteArray);
+                    String key = state.toString();  // Utiliser la même méthode que pour la compression
+                    
                     double[] values = new double[67];
                     // Copier l'état du plateau (0-63)
                     for (int i = 0; i < 64; i++) {
                         values[i] = Double.parseDouble(parts[i]);
-                    }
-                    // Construire la clé à partir de l'état du plateau
-                    StringBuilder key = new StringBuilder();
-                    for (int i = 0; i < 64; i++) {
-                        key.append(parts[i]);
-                        if (i < 63) key.append(",");
                     }
                     
                     // La moyenne (64) est recalculée automatiquement
@@ -411,7 +413,7 @@ public abstract class GameStateExporter {
                     // Nombre d'occurrences (66)
                     values[66] = Double.parseDouble(parts[66]);
                     
-                    existingData.put(key.toString(), values);
+                    existingData.put(key, values);
                 }
             }
         } catch (IOException e) {
