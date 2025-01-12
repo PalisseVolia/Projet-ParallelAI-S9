@@ -448,9 +448,11 @@ public class ClassicThreadExporter extends GameStateExporter {
      */
     private void processBatchLocal(List<GameState> batch, Map<String, double[]> localMap, double finalResult) {
         for (GameState game : batch) {
+            double gameResult = game.result == 1 ? 1.0 : game.result == 0 ? 0.5 : 0.0;
+            
             for (CompressedState state : game.history) {
                 String key = state.toString();
-                processStateLocal(localMap, key, state, finalResult);
+                processStateLocal(localMap, key, state, gameResult);  // Utiliser le résultat de la partie
             }
         }
     }
@@ -498,7 +500,7 @@ public class ClassicThreadExporter extends GameStateExporter {
 
     public static void main(String[] args) {
         // Paramètres de test
-        int nbParties = 10000;
+        int nbParties = 100;
         int nbThreads = Runtime.getRuntime().availableProcessors();
         String outputPath = "test_dataset.csv";
         
