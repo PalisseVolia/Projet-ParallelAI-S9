@@ -243,6 +243,13 @@ public class GameManager {
             }
         }
 
+        // Après la collecte des résultats et avant executor.shutdown()
+        System.out.print("\r[");
+        for (int j = 0; j < 50; j++) {
+            System.out.print("=");
+        }
+        System.out.print("] 100% (" + numGames + "/" + numGames + ")");
+        
         executor.shutdown();
         try {
             executor.awaitTermination(1, TimeUnit.HOURS);
