@@ -391,20 +391,27 @@ public abstract class GameStateExporter {
             String line;
             while ((line = reader.readLine()) != null) {
                 String[] parts = line.split(",");
-                if (parts.length >= 67) { // 64 cases + moyenne + somme + count
-                    String state = parts[0]; // On utilise la première case comme clé
+                if (parts.length >= 67) {
                     double[] values = new double[67];
                     // Copier l'état du plateau (0-63)
                     for (int i = 0; i < 64; i++) {
                         values[i] = Double.parseDouble(parts[i]);
                     }
+                    // Construire la clé à partir de l'état du plateau
+                    StringBuilder key = new StringBuilder();
+                    for (int i = 0; i < 64; i++) {
+                        key.append(parts[i]);
+                        if (i < 63) key.append(",");
+                    }
+                    
                     // La moyenne (64) est recalculée automatiquement
-                    values[64] = 0; // sera calculée à l'export
+                    values[64] = 0;
                     // Somme totale (65)
                     values[65] = Double.parseDouble(parts[65]);
                     // Nombre d'occurrences (66)
                     values[66] = Double.parseDouble(parts[66]);
-                    existingData.put(state, values);
+                    
+                    existingData.put(key.toString(), values);
                 }
             }
         } catch (IOException e) {

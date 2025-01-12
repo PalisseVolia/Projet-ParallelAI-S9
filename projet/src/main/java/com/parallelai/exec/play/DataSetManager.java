@@ -70,7 +70,6 @@ public class DataSetManager {
         
         int nbThreads = Runtime.getRuntime().availableProcessors();
         ClassicThreadExporter exporter = new ClassicThreadExporter(fullPath);
-        
         System.out.println("\nGénération du jeu de données...");
         if (aiType == AIType.REGULAR) {
             AIPlayer p1 = new AIPlayer(Disc.BLACK, model1);

@@ -4,6 +4,7 @@ import com.parallelai.exec.play.GameManager;
 import com.parallelai.export.GameStateExporter;
 import com.parallelai.export.utilities.GameExporterUtils.*;
 import com.parallelai.game.Board;
+import com.parallelai.models.RandomModel;
 import com.parallelai.models.utils.Model;
 import com.parallelai.players.AIPlayer;
 import com.parallelai.players.AIWeightedPlayer;
@@ -142,24 +143,28 @@ public class ClassicThreadExporter extends GameStateExporter {
 
         if (appendToExisting) {
             // Fusion intelligente des données existantes avec les nouvelles
-            existingData.forEach((key, existingValue) -> {
-                finalMap.compute(key, (k, newValue) -> {
-                    if (newValue == null) {
-                        return existingValue;
+            Map<String, double[]> mergedMap = new HashMap<>(existingData); // Copie les données existantes
+            
+            finalMap.forEach((key, newValue) -> {
+                mergedMap.compute(key, (k, existingValue) -> {
+                    if (existingValue == null) {
+                        return newValue.clone(); // Nouvelle donnée
                     } else {
                         // Mettre à jour les compteurs et moyennes
-                        newValue[64] += existingValue[64]; // Somme des résultats
-                        newValue[65] += existingValue[65]; // Nombre d'occurrences
-                        return newValue;
+                        existingValue[65] += newValue[65]; // Somme totale
+                        existingValue[66] += newValue[66]; // Nombre d'occurrences
+                        // existingValue[64] sera recalculé à l'export
+                        return existingValue;
                     }
                 });
             });
+            
+            finalMap = mergedMap; // Remplace finalMap par la version fusionnée
         }
 
         // Libérer la mémoire
         allResults.clear();
         allResults = null;
-        System.gc();
 
         exportStateMap(finalMap);
         System.out.println("Terminé! " + finalMap.size() + " situations uniques sauvegardées.");
@@ -272,24 +277,28 @@ public class ClassicThreadExporter extends GameStateExporter {
 
         if (appendToExisting) {
             // Fusion intelligente des données existantes avec les nouvelles
-            existingData.forEach((key, existingValue) -> {
-                finalMap.compute(key, (k, newValue) -> {
-                    if (newValue == null) {
-                        return existingValue;
+            Map<String, double[]> mergedMap = new HashMap<>(existingData); // Copie les données existantes
+            
+            finalMap.forEach((key, newValue) -> {
+                mergedMap.compute(key, (k, existingValue) -> {
+                    if (existingValue == null) {
+                        return newValue.clone(); // Nouvelle donnée
                     } else {
                         // Mettre à jour les compteurs et moyennes
-                        newValue[64] += existingValue[64]; // Somme des résultats
-                        newValue[65] += existingValue[65]; // Nombre d'occurrences
-                        return newValue;
+                        existingValue[65] += newValue[65]; // Somme totale
+                        existingValue[66] += newValue[66]; // Nombre d'occurrences
+                        // existingValue[64] sera recalculé à l'export
+                        return existingValue;
                     }
                 });
             });
+            
+            finalMap = mergedMap; // Remplace finalMap par la version fusionnée
         }
 
         // Libérer la mémoire
         allResults.clear();
         allResults = null;
-        System.gc();
 
         exportStateMap(finalMap);
         System.out.println("Terminé! " + finalMap.size() + " situations uniques sauvegardées.");
@@ -402,24 +411,28 @@ public class ClassicThreadExporter extends GameStateExporter {
 
         if (appendToExisting) {
             // Fusion intelligente des données existantes avec les nouvelles
-            existingData.forEach((key, existingValue) -> {
-                finalMap.compute(key, (k, newValue) -> {
-                    if (newValue == null) {
-                        return existingValue;
+            Map<String, double[]> mergedMap = new HashMap<>(existingData); // Copie les données existantes
+            
+            finalMap.forEach((key, newValue) -> {
+                mergedMap.compute(key, (k, existingValue) -> {
+                    if (existingValue == null) {
+                        return newValue.clone(); // Nouvelle donnée
                     } else {
                         // Mettre à jour les compteurs et moyennes
-                        newValue[64] += existingValue[64]; // Somme des résultats
-                        newValue[65] += existingValue[65]; // Nombre d'occurrences
-                        return newValue;
+                        existingValue[65] += newValue[65]; // Somme totale
+                        existingValue[66] += newValue[66]; // Nombre d'occurrences
+                        // existingValue[64] sera recalculé à l'export
+                        return existingValue;
                     }
                 });
             });
+            
+            finalMap = mergedMap; // Remplace finalMap par la version fusionnée
         }
 
         // Libérer la mémoire
         allResults.clear();
         allResults = null;
-        System.gc();
 
         exportStateMap(finalMap);
         System.out.println("Terminé! " + finalMap.size() + " situations uniques sauvegardées.");
@@ -481,6 +494,50 @@ public class ClassicThreadExporter extends GameStateExporter {
         if (result == 1) stats.blackWins++;
         else if (result == -1) stats.whiteWins++;
         else stats.draws++;
+    }
+
+    public static void main(String[] args) {
+        // Paramètres de test
+        int nbParties = 10000;
+        int nbThreads = Runtime.getRuntime().availableProcessors();
+        String outputPath = "test_dataset.csv";
+        
+        // Création des modèles pour le test
+        Model model1 = new RandomModel();
+        Model model2 = new RandomModel();
+        
+        System.out.println("=== Test sans fichier existant ===");
+        ClassicThreadExporter exporter = new ClassicThreadExporter(outputPath);
+        exporter.startGamesWithUniqueStatesClassicThreads(nbParties, model1, model2, nbThreads, false);
+        
+        // Récupérer le nombre de situations de la première exécution
+        int firstRunSize = 0;
+        try {
+            Map<String, double[]> firstRunData = exporter.loadExistingCSV();
+            firstRunSize = firstRunData.size();
+            System.out.println("\nNombre de situations après première exécution : " + firstRunSize);
+        } catch (Exception e) {
+            System.err.println("Erreur lors de la lecture du premier fichier");
+        }
+        
+        try {
+            Thread.sleep(2000);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+        
+        System.out.println("\n=== Test avec fichier existant ===");
+        ClassicThreadExporter exporter2 = new ClassicThreadExporter(outputPath);
+        exporter2.startGamesWithUniqueStatesClassicThreads(nbParties, model1, model2, nbThreads, true);
+        
+        // Vérifier le nombre final de situations
+        try {
+            Map<String, double[]> finalData = exporter2.loadExistingCSV();
+            System.out.println("\nNombre de situations après fusion : " + finalData.size());
+            System.out.println("Différence : " + (finalData.size() - firstRunSize) + " nouvelles situations");
+        } catch (Exception e) {
+            System.err.println("Erreur lors de la lecture du fichier final");
+        }
     }
 }
 
