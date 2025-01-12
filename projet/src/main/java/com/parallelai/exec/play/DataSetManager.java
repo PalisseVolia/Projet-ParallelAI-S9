@@ -84,7 +84,7 @@ public class DataSetManager {
         FileDatabaseManager.insertFile(fullPath, 3);
         
         // Cleanup
-        /*
+        
         try {
             if (new File(fullPath).delete()) {
                 System.out.println("Fichier local nettoyé avec succès.");
@@ -92,7 +92,7 @@ public class DataSetManager {
         } catch (Exception e) {
             System.err.println("Attention : Impossible de supprimer le fichier local : " + e.getMessage());
         }
-            */
+        
         
         System.out.println("\nCréation du jeu de données terminée !");
     }
