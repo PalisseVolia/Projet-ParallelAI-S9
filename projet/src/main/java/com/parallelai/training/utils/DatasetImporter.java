@@ -69,4 +69,36 @@ public class DatasetImporter {
         Collections.shuffle(dataset);
         return dataset;
     }
+
+    public DataSetIterator[] splitDataset(String datasetPath, int batchSize, int trainSize, int evalSize) {
+        // Load full dataset
+        DataSetIterator fullIterator;
+        try {
+            fullIterator = importDataset(datasetPath, batchSize);
+        } catch (IOException e) {
+            e.printStackTrace();
+            return new DataSetIterator[0]; // Return an empty array in case of error
+        }
+        
+        // Create lists to store split data
+        List<DataSet> trainData = new ArrayList<>();
+        List<DataSet> evalData = new ArrayList<>();
+        
+        int currentSize = 0;
+        while (fullIterator.hasNext() && currentSize < trainSize) {
+            trainData.add(fullIterator.next());
+            currentSize += batchSize;
+        }
+        
+        while (fullIterator.hasNext() && currentSize < (trainSize + evalSize)) {
+            evalData.add(fullIterator.next());
+            currentSize += batchSize;
+        }
+        
+        // Create iterators from the split data
+        DataSetIterator trainIterator = new ListDataSetIterator<>(trainData, batchSize);
+        DataSetIterator evalIterator = new ListDataSetIterator<>(evalData, batchSize);
+        
+        return new DataSetIterator[] {trainIterator, evalIterator};
+    }
 }

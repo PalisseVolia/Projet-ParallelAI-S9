@@ -27,8 +27,23 @@ public class DenseTraining {
     public TrainerResult train(String datasetPath, String modelName, int batchSize, int nEpochs) throws IOException {
         // Load and prepare data
         DatasetImporter importer = new DatasetImporter();
-        DataSetIterator trainIterator = importer.importDataset(datasetPath, batchSize);
-        DataSetIterator evalIterator = importer.importDataset(datasetPath, batchSize);
+        // Split dataset into training (80%) and validation (20%) sets
+        DataSetIterator fullIterator = importer.importDataset(datasetPath, batchSize);
+        
+        // Calculate total samples and split sizes
+        int totalSamples = 0;
+        while (fullIterator.hasNext()) {
+            fullIterator.next();
+            totalSamples += batchSize;
+        }
+        fullIterator.reset();
+        
+        int trainSize = (int) (totalSamples * 0.8);
+        int evalSize = totalSamples - trainSize;
+        
+        DataSetIterator[] iterators = importer.splitDataset(datasetPath, batchSize, trainSize, evalSize);
+        DataSetIterator trainIterator = iterators[0];
+        DataSetIterator evalIterator = iterators[1];
         
         // Configure network
         MultiLayerConfiguration conf = new NeuralNetConfiguration.Builder()

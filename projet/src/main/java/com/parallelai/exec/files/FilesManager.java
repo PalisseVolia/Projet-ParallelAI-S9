@@ -26,7 +26,6 @@ public class FilesManager {
     public void startFileManager() {
         boolean running = true;
         while (running) {
-            System.out.println("\n=== Gestionnaire de Fichiers ===");
             System.out.println("Choisissez le type de fichier :");
             System.out.println("1. Modèles CNN");
             System.out.println("2. Modèles MLP");

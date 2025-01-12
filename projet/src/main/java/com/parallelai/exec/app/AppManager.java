@@ -1,6 +1,7 @@
 package com.parallelai.exec.app;
 
 import com.parallelai.exec.train.TrainerManager;
+import com.parallelai.exec.files.FilesManager;
 import com.parallelai.exec.play.GameManager;
 import java.util.Scanner;
 
@@ -44,7 +45,7 @@ public class AppManager {
                     
                 case 3:
                     System.out.println("\n=== Gestionnaire de Fichiers ===");
-                    System.out.println("Cette fonctionnalité sera disponible prochainement.");
+                    new FilesManager().startFileManager();
                     break;
                     
                 case 4:
