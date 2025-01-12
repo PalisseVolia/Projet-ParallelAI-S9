@@ -39,6 +39,7 @@ public class GameManager {
     private Player currentPlayer;
     private final List<Board> gameHistory;
     private boolean isGameOver;
+    public String save_file = "";
 
     // Statistiques de jeu
     private String model1Name;

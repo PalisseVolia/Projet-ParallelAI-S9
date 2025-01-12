@@ -1,3 +1,6 @@
 
 *csv
 *class
+projet/src/main/ressources/data/game_history.csv
+projet/target/classes/com/parallelai/players/AIPlayer.class
+*.class
