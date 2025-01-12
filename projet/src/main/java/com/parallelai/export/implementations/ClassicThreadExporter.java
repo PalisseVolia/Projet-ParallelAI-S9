@@ -566,7 +566,9 @@ public class ClassicThreadExporter extends GameStateExporter {
      * @param stats Objet contenant les statistiques à afficher
      */
     private void displayGameStats(GameStats stats) {
-        System.out.println("\nRésultats finaux :");
+        // Ajouter un saut de ligne supplémentaire pour éviter le chevauchement
+        System.out.println("\n");
+        System.out.println("Résultats finaux :");
         System.out.println("Victoires des Noirs : " + stats.blackWins);
         System.out.println("Victoires des Blancs : " + stats.whiteWins);
         System.out.println("Matchs nuls : " + stats.draws);

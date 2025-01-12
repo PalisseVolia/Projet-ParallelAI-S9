@@ -42,8 +42,8 @@ public class GameExporterUtils {
                 float percent = (float) current / total;
                 int progress = (int) (width * percent);
                 
-                // Déplacer le curseur à la ligne correspondant au thread
-                System.out.print(String.format("\033[%dH\033[K", threadId + 1));
+                // Ajouter +1 pour tenir compte du titre ajouté
+                System.out.print(String.format("\033[%dH\033[K", threadId + 2));
                 System.out.print(String.format("Thread %2d [", threadId));
                 for (int i = 0; i < width; i++) {
                     if (i < progress) System.out.print("=");
@@ -58,6 +58,7 @@ public class GameExporterUtils {
             // Effacer l'écran et préparer l'espace pour chaque barre
             System.out.print("\033[2J");  // Effacer l'écran
             System.out.print("\033[H");   // Retour en haut
+            System.out.println("Progression des parties :\n"); // Ajouter un titre et un saut de ligne
             for (int i = 0; i < nbThreads; i++) {
                 System.out.println();  // Créer une ligne vide pour chaque thread
             }

@@ -13,20 +13,38 @@ import java.io.File;
 import java.util.Scanner;
 
 /**
- * Gestionnaire de jeux de données pour l'apprentissage des modèles.
- * Permet de jouer des parties et optionnellement les sauvegarder dans des jeux de données.
+ * Gestionnaire de jeux de données pour l'apprentissage des modèles d'IA.
+ * Cette classe permet de :
+ * - Créer de nouveaux jeux de données à partir de parties simulées
+ * - Ajouter des données à des jeux existants
+ * - Gérer le stockage local et distant des données
+ * - Interfacer avec différents types d'IA (standard et pondérée)
  */
 public class DataSetManager {
-    // Dossier où sont stockés temporairement les fichiers de données
+    /** Chemin du dossier temporaire pour le stockage local des données */
     private static final String DATA_FOLDER = "projet\\src\\main\\ressources\\data\\";
+    
+    /** Scanner pour la lecture des entrées utilisateur */
     private final Scanner scanner;
+    
+    /** Premier modèle d'IA utilisé pour les simulations */
     private final Model model1;
+    
+    /** Second modèle d'IA utilisé pour les simulations */
     private final Model model2;
+    
+    /** Nombre de parties à simuler */
     private final int nbParties;
+    
+    /** Type d'IA à utiliser (standard ou pondérée) */
     private final AIType aiType;
 
     /**
-     * Constructeur avec les paramètres nécessaires
+     * Constructeur du gestionnaire de jeux de données
+     * @param model1 Premier modèle d'IA pour les simulations
+     * @param model2 Second modèle d'IA pour les simulations
+     * @param nbParties Nombre de parties à simuler
+     * @param aiType Type d'IA à utiliser (REGULAR ou WEIGHTED)
      */
     public DataSetManager(Model model1, Model model2, int nbParties, AIType aiType) {
         this.scanner = new Scanner(System.in);
@@ -37,7 +55,11 @@ public class DataSetManager {
     }
 
     /**
-     * Initialize les options de dataset quand on veut sauvegarder
+     * Affiche et gère le menu des options de gestion des jeux de données.
+     * Permet à l'utilisateur de :
+     * - Créer un nouveau jeu de données
+     * - Ajouter des données à un jeu existant
+     * - Annuler l'opération
      */
     public void initializeDatasetOptions() {
         System.out.println("\n=== Options du Jeu de Données ===");
@@ -62,23 +84,45 @@ public class DataSetManager {
     }
 
     /**
-     * Version modifiée de createNewDataset qui utilise les Players fournis
+     * Crée un nouveau jeu de données en simulant des parties.
+     * Processus :
+     * 1. Vérifie et crée le dossier de données si nécessaire
+     * 2. Demande le nom du nouveau jeu de données
+     * 3. Lance les simulations avec le type d'IA spécifié
+     * 4. Sauvegarde les résultats dans la base de données
+     * 5. Nettoie les fichiers temporaires
      */
     private void createNewDataset() {
+        // Vérifier si le dossier existe, sinon le créer
+        File dataFolder = new File(DATA_FOLDER);
+        if (!dataFolder.exists()) {
+            if (dataFolder.mkdirs()) {
+                System.out.println("Dossier de données créé : " + DATA_FOLDER);
+            } else {
+                System.err.println("Erreur lors de la création du dossier de données");
+                return;
+            }
+        }
+
         System.out.println("\nEntrez le nom de votre jeu de données (sans l'extension .csv) :");
         String datasetName = scanner.nextLine();
         String fullPath = DATA_FOLDER + datasetName + ".csv";
         
         int nbThreads = Runtime.getRuntime().availableProcessors();
         ClassicThreadExporter exporter = new ClassicThreadExporter(fullPath);
-        System.out.println("\nGénération du jeu de données...");
+
+        System.out.println("\nInitialisation des modèles d'IA...");
+        System.out.println("Cette étape peut prendre quelques instants pour les modèles CNN/MLP...");
+
         if (aiType == AIType.REGULAR) {
             AIPlayer p1 = new AIPlayer(Disc.BLACK, model1);
             AIPlayer p2 = new AIPlayer(Disc.WHITE, model2);
+            System.out.println("Modèles initialisés. Début de la génération du jeu de données...\n");
             exporter.startGamesWithUniqueStatesClassicThreads(nbParties, p1, p2, nbThreads, false);
         } else {
             AIWeightedPlayer p1 = new AIWeightedPlayer(Disc.BLACK, model1);
             AIWeightedPlayer p2 = new AIWeightedPlayer(Disc.WHITE, model2);
+            System.out.println("Modèles initialisés. Début de la génération du jeu de données...\n");
             exporter.startGamesWithUniqueStatesClassicThreads(nbParties, p1, p2, nbThreads, false);
         }        
         System.out.println("\nChargement du jeu de données dans la base...");
@@ -100,7 +144,14 @@ public class DataSetManager {
     }
 
     /**
-     * Version modifiée de addToExistingDataset qui utilise les Players fournis
+     * Ajoute de nouvelles données à un jeu existant.
+     * Processus :
+     * 1. Permet la sélection d'un jeu existant
+     * 2. Télécharge les données existantes
+     * 3. Simule de nouvelles parties
+     * 4. Fusionne les nouvelles données avec les existantes
+     * 5. Met à jour la base de données
+     * 6. Nettoie les fichiers temporaires
      */
     private void addToExistingDataset() {
         String selectedDataset = selectExistingDataset();
@@ -117,15 +168,18 @@ public class DataSetManager {
             int nbThreads = Runtime.getRuntime().availableProcessors();
             ClassicThreadExporter exporter = new ClassicThreadExporter(localPath);
             
-            System.out.println("\nAjout de nouvelles parties au jeu de données...");
+            System.out.println("\nInitialisation des modèles d'IA...");
+            System.out.println("Cette étape peut prendre quelques instants pour les modèles CNN/MLP...");
             
             if (aiType == AIType.REGULAR) {
                 AIPlayer p1 = new AIPlayer(Disc.BLACK, model1);
                 AIPlayer p2 = new AIPlayer(Disc.WHITE, model2);
+                System.out.println("Modèles initialisés. Début de l'ajout des parties...\n");
                 exporter.startGamesWithUniqueStatesClassicThreads(nbParties, p1, p2, nbThreads, false);
             } else {
                 AIWeightedPlayer p1 = new AIWeightedPlayer(Disc.BLACK, model1);
                 AIWeightedPlayer p2 = new AIWeightedPlayer(Disc.WHITE, model2);
+                System.out.println("Modèles initialisés. Début de l'ajout des parties...\n");
                 exporter.startGamesWithUniqueStatesClassicThreads(nbParties, p1, p2, nbThreads, false);
             }
 
@@ -151,8 +205,14 @@ public class DataSetManager {
     }
 
     /**
-     * Affiche la liste des datasets existants et permet à l'utilisateur d'en sélectionner un
-     * @return Le nom du dataset sélectionné ou null si l'utilisateur annule
+     * Gère l'interface de sélection des jeux de données existants.
+     * Fonctionnalités :
+     * - Affiche la liste des jeux disponibles
+     * - Permet la sélection par numéro
+     * - Gère les erreurs de saisie
+     * - Offre une option de retour
+     * 
+     * @return Le nom du jeu de données sélectionné ou null si annulation
      */
     private String selectExistingDataset() {
         while (true) {
