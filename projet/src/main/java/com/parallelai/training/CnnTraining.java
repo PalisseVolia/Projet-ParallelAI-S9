@@ -98,27 +98,6 @@ public class CnnTraining {
                 tempFile.delete();
                 finalEval = eval;
             }
-
-            // TODO: =========================================TEMPORARY=========================================
-            // Get current model score (loss)
-            double currentLoss = model.score();
-            
-            // Export metrics to file
-            try (FileWriter fw = new FileWriter("tempMetrics.txt", true)) {
-                String metricsLine = String.format("Model=%s, Epoch %d/%d: BatchSize=%d, Loss=%.6f, MSE=%.6f, RMSE=%.6f, R²=%.6f%n",
-                    modelName,
-                    (i + 1),
-                    nEpochs,
-                    batchSize,
-                    currentLoss,
-                    eval.meanSquaredError(0),
-                    eval.rootMeanSquaredError(0),
-                    eval.rSquared(0));
-                fw.write(metricsLine);
-            } catch (IOException e) {
-                System.err.println("Error writing metrics to file: " + e.getMessage());
-            }
-            // TODO: =========================================TEMPORARY=========================================
             
             // Afficher les métriques
             System.out.println(String.format("Epoch %d/%d", (i + 1), nEpochs));

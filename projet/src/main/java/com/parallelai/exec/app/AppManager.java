@@ -72,7 +72,7 @@ public class AppManager {
      */
     private void displayMainMenu() {
         System.out.println("\n=== Application Othello AI ===");
-        System.out.println("1. Jouer une ou des partie");
+        System.out.println("1. Jouer une ou des parties");
         System.out.println("2. Entraîner un modèle");
         System.out.println("3. Supprimer des fichiers");
         System.out.println("4. Quitter");
