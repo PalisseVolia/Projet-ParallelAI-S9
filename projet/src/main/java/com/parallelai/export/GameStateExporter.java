@@ -19,7 +19,6 @@ import java.util.Arrays;
 
 import com.parallelai.exec.play.GameManager;
 import com.parallelai.export.implementations.ClassicThreadExporter;
-import com.parallelai.export.implementations.OptimizedExporter;
 import com.parallelai.export.implementations.ParallelExporter;
 import com.parallelai.export.utilities.GameExporterUtils.CompressedState;
 import com.parallelai.export.utilities.GameExporterUtils.ProgressBar;
@@ -393,12 +392,12 @@ public abstract class GameStateExporter {
             while ((line = reader.readLine()) != null) {
                 String[] parts = line.split(",");
                 if (parts.length >= 67) {
-                    byte[] byteArray = new byte[64];
+                    // Créer la clé à partir des 64 premières colonnes
+                    StringBuilder keyBuilder = new StringBuilder();
                     for (int i = 0; i < 64; i++) {
-                        byteArray[i] = Byte.parseByte(parts[i]);
+                        keyBuilder.append(parts[i]).append(",");
                     }
-                    CompressedState state = new CompressedState(byteArray);
-                    String key = state.toString();  // Utiliser la même méthode que pour la compression
+                    String key = keyBuilder.toString();
                     
                     double[] values = new double[67];
                     // Copier l'état du plateau (0-63)
@@ -406,8 +405,8 @@ public abstract class GameStateExporter {
                         values[i] = Double.parseDouble(parts[i]);
                     }
                     
-                    // La moyenne (64) est recalculée automatiquement
-                    values[64] = 0;
+                    // La moyenne (64)
+                    values[64] = Double.parseDouble(parts[64]);
                     // Somme totale (65)
                     values[65] = Double.parseDouble(parts[65]);
                     // Nombre d'occurrences (66)
@@ -681,7 +680,6 @@ public abstract class GameStateExporter {
         GameStateExporter baseExporter = new ClassicThreadExporter(outputPath);
         ParallelExporter parallelExporter = new ParallelExporter(outputPath);
         ClassicThreadExporter classicExporter = new ClassicThreadExporter(outputPath);
-        OptimizedExporter optimizedExporter = new OptimizedExporter(outputPath);
         
         Model model1 = new RandomModel();
         Model model2 = new RandomModel();
