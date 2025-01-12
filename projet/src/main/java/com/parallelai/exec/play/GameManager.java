@@ -90,7 +90,7 @@ public class GameManager {
      * @param p1    Joueur IA pondéré noir
      * @param p2    Joueur IA pondéré blanc
      */
-    public GameManager(Board board, AIWeightedPlayer p1, AIWeightedPlayer p2) { // TODO : maybe unused
+    public GameManager(Board board, AIWeightedPlayer p1, AIWeightedPlayer p2) {
         this.scanner = new Scanner(System.in);
         this.board = board;
         this.player1 = p1;
